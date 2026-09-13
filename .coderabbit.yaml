@@ -1,0 +1,33 @@
+# AI code review on every pull request (free for open-source repositories).
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "stacks/**/*.yaml"
+      instructions: |
+        DevSweep stack definitions; the schema is documented in CONTRIBUTING.md. Check that:
+        - `risk` is honest: `safe` only when the tool regenerates the data without downloads, `data_loss` for anything a user could miss.
+        - `run:` commands only call the stack's official CLI and cannot affect anything beyond the listed paths.
+        - Paths start with ~/ or ${VAR:-~/...} and contain no usernames, company names or private URLs.
+        - Process matchers are specific enough not to catch unrelated processes; catch-all rules use `fallback: true`.
+        - New names and descriptions have at least an `en` text.
+    - path: "locales/**/*.yaml"
+      instructions: |
+        UI translations. Keys must match locales/en.yaml and every {placeholder} must be kept unchanged.
+        Flag mistranslations and terminology that is inconsistent with the rest of the file.
+    - path: "Sources/DevSweep/{Storage,Processes}/**/*.swift"
+      instructions: |
+        This code deletes files and terminates processes. Be strict about path safety (SafeDelete),
+        PID reuse, and anything that could touch data outside the user's home folder.
+    - path: ".github/workflows/**"
+      instructions: |
+        Check least-privilege `permissions`, and that secrets are never exposed to pull requests from forks.
+chat:
+  auto_reply: true

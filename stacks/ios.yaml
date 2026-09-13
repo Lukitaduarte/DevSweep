@@ -1,0 +1,256 @@
+# iOS and Xcode. Schema reference: CONTRIBUTING.md
+stack:
+  id: ios
+  name: iOS / Xcode
+  icon: iphone
+  order: 10
+
+processes:
+  - id: crashlytics
+    name: Crashlytics upload-symbols
+    description:
+      en: "Firebase Crashlytics build phase that kept hanging after the build."
+      pt-BR: "Build phase do Firebase Crashlytics que ficou pendurada depois do build."
+      es: "Fase de build de Firebase Crashlytics que quedó colgada después del build."
+    match:
+      command_contains: [FirebaseCrashlytics/upload-symbols, FirebaseCrashlytics/run]
+    limbo: { when: orphan_or_older, minutes: 30 }
+    suggest_even_if_small: true
+
+  - id: xcode-scripts
+    name:
+      en: Xcode Run Scripts
+      pt-BR: Run Scripts do Xcode
+      es: Run Scripts de Xcode
+    description:
+      en: "Build phase scripts (CocoaPods, Flutter, lint) that never finished."
+      pt-BR: "Scripts de build phase (CocoaPods, Flutter, lint) que não terminaram."
+      es: "Scripts de fases de build (CocoaPods, Flutter, lint) que nunca terminaron."
+    match:
+      all:
+        - command_contains: /DerivedData/
+        - command_contains: /Script-
+    limbo: { when: orphan_or_older, minutes: 60 }
+    suggest_even_if_small: true
+
+  - id: sourcekit-lsp
+    name: SourceKit-LSP
+    description:
+      en: "Swift language server."
+      pt-BR: "Language server do Swift."
+      es: "Language server de Swift."
+    match:
+      exe_name: sourcekit-lsp
+
+  - id: ios-sim
+    name:
+      en: iOS Simulators
+      pt-BR: Simuladores iOS
+      es: Simuladores de iOS
+    description:
+      en: "Booted simulators and their processes."
+      pt-BR: "Simuladores ligados e seus processos."
+      es: "Simuladores encendidos y sus procesos."
+    match:
+      any:
+        - exe_name: launchd_sim
+        - exe_path_contains: Simulator.app/Contents/MacOS/Simulator
+    limbo: never
+    stop:
+      run:
+        - [xcrun, simctl, shutdown, all]
+    suggest_when_memory_tight: true
+
+storage:
+  - id: xcode-index
+    name:
+      en: Xcode indexes
+      pt-BR: Índices do Xcode
+      es: Índices de Xcode
+    description:
+      en: "DerivedData/*/Index.noindex. Rebuilt when Xcode re-indexes the project."
+      pt-BR: "DerivedData/*/Index.noindex. Recriados quando o Xcode reindexa o projeto."
+      es: "DerivedData/*/Index.noindex. Se regeneran cuando Xcode vuelve a indexar el proyecto."
+    risk: safe
+    suggest_above: 1GB
+    paths:
+      - ~/Library/Developer/Xcode/DerivedData/*/Index.noindex
+
+  - id: derived-data
+    name: Xcode DerivedData (builds)
+    description:
+      en: "Intermediate builds, module cache and logs. The next build takes longer."
+      pt-BR: "Builds intermediários, module cache e logs. O próximo build demora mais."
+      es: "Builds intermedios, module cache y logs. El próximo build tarda más."
+    risk: safe
+    paths:
+      - glob: ~/Library/Developer/Xcode/DerivedData/*/*
+        exclude: [Index.noindex]
+
+  - id: device-support
+    name:
+      en: Old DeviceSupport files
+      pt-BR: DeviceSupport antigos
+      es: DeviceSupport antiguos
+    description:
+      en: "Symbols of old OS versions copied from devices. Keeps the newest per platform."
+      pt-BR: "Símbolos de versões antigas do sistema copiados de aparelhos. Mantém o mais recente de cada plataforma."
+      es: "Símbolos de versiones antiguas del sistema copiados de dispositivos. Conserva el más reciente de cada plataforma."
+    risk: redownload
+    suggest_above: 1GB
+    paths:
+      - { glob: "~/Library/Developer/Xcode/iOS DeviceSupport/*", keep_newest: 1 }
+      - { glob: "~/Library/Developer/Xcode/watchOS DeviceSupport/*", keep_newest: 1 }
+      - { glob: "~/Library/Developer/Xcode/tvOS DeviceSupport/*", keep_newest: 1 }
+      - { glob: "~/Library/Developer/Xcode/visionOS DeviceSupport/*", keep_newest: 1 }
+      - { glob: "~/Library/Developer/Xcode/macOS DeviceSupport/*", keep_newest: 1 }
+
+  - id: sim-unavailable
+    name:
+      en: Simulators of removed runtimes
+      pt-BR: Simuladores de runtimes removidos
+      es: Simuladores de runtimes eliminados
+    description:
+      en: "Simulators whose iOS runtime is no longer installed (simctl delete unavailable)."
+      pt-BR: "Simuladores cujo runtime do iOS não está mais instalado (simctl delete unavailable)."
+      es: "Simuladores cuyo runtime de iOS ya no está instalado (simctl delete unavailable)."
+    risk: safe
+    suggest_above: 1
+    requires_path: ~/Library/Developer/CoreSimulator/Devices
+    provider: xcode-unavailable-simulators
+    run:
+      - [xcrun, simctl, delete, unavailable]
+
+  - id: sim-data
+    name:
+      en: Data of all simulators
+      pt-BR: Dados de todos os simuladores
+      es: Datos de todos los simuladores
+    description:
+      en: "Resets apps, data and keychain of every simulator (simctl erase all). The simulators themselves stay."
+      pt-BR: "Reseta apps, dados e keychain de todos os simuladores (simctl erase all). Os simuladores continuam existindo."
+      es: "Restablece apps, datos y llavero de todos los simuladores (simctl erase all). Los simuladores siguen existiendo."
+    risk: data_loss
+    auto_suggest: false
+    requires_path: ~/Library/Developer/CoreSimulator/Devices
+    paths:
+      - ~/Library/Developer/CoreSimulator/Devices/*/data
+    run:
+      - [xcrun, simctl, shutdown, all]
+      - [xcrun, simctl, erase, all]
+
+  - id: sim-caches
+    name:
+      en: CoreSimulator caches and logs
+      pt-BR: Caches e logs do CoreSimulator
+      es: Cachés y logs de CoreSimulator
+    description:
+      en: "dyld caches and simulator logs."
+      pt-BR: "Caches de dyld e logs dos simuladores."
+      es: "Cachés de dyld y logs de los simuladores."
+    risk: safe
+    suggest_above: 500MB
+    paths:
+      - ~/Library/Developer/CoreSimulator/Caches/*
+      - ~/Library/Logs/CoreSimulator/*
+
+  - id: xcode-previews
+    name:
+      en: SwiftUI Previews simulators
+      pt-BR: Simuladores do SwiftUI Previews
+      es: Simuladores de SwiftUI Previews
+    description:
+      en: "Devices created by Xcode Previews."
+      pt-BR: "Dispositivos criados pelos Previews do Xcode."
+      es: "Dispositivos creados por los Previews de Xcode."
+    risk: safe
+    suggest_above: 500MB
+    paths:
+      - ~/Library/Developer/Xcode/UserData/Previews/*
+
+  - id: xcode-caches
+    name:
+      en: Xcode cache
+      pt-BR: Cache do Xcode
+      es: Caché de Xcode
+    description:
+      en: "~/Library/Caches/com.apple.dt.Xcode. Best cleaned with Xcode closed."
+      pt-BR: "~/Library/Caches/com.apple.dt.Xcode. Melhor com o Xcode fechado."
+      es: "~/Library/Caches/com.apple.dt.Xcode. Mejor con Xcode cerrado."
+    risk: safe
+    suggest_above: 500MB
+    paths:
+      - ~/Library/Caches/com.apple.dt.Xcode/*
+
+  - id: xcode-archives
+    name:
+      en: Archives older than 90 days
+      pt-BR: Archives com mais de 90 dias
+      es: Archives de más de 90 días
+    description:
+      en: "Old xcarchives. They contain dSYMs to symbolicate crashes. Moved to the Trash."
+      pt-BR: "xcarchives antigos. Contêm dSYMs para simbolizar crashes. Vão para a Lixeira."
+      es: "xcarchives antiguos. Contienen dSYMs para simbolizar crashes. Van a la Papelera."
+    risk: data_loss
+    method: trash
+    auto_suggest: false
+    paths:
+      - glob: ~/Library/Developer/Xcode/Archives/*/*.xcarchive
+        older_than_days: 90
+
+  - id: cocoapods-cache
+    name:
+      en: CocoaPods cache
+      pt-BR: Cache do CocoaPods
+      es: Caché de CocoaPods
+    description:
+      en: "Downloaded pods. They come back on the next pod install."
+      pt-BR: "Pods baixados. Voltam no próximo pod install."
+      es: "Pods descargados. Vuelven en el próximo pod install."
+    risk: redownload
+    paths:
+      - ~/Library/Caches/CocoaPods/*
+
+  - id: cocoapods-public-specs
+    name:
+      en: "CocoaPods: legacy Specs clone"
+      pt-BR: "CocoaPods: clone legado do Specs"
+      es: "CocoaPods: clon heredado de Specs"
+    description:
+      en: "Git clone of the public specs repository. Current CocoaPods uses the CDN (trunk)."
+      pt-BR: "Clone git do repositório público de specs. O CocoaPods atual usa a CDN (trunk)."
+      es: "Clon git del repositorio público de specs. El CocoaPods actual usa la CDN (trunk)."
+    risk: redownload
+    suggest_above: 500MB
+    paths:
+      - glob: ~/.cocoapods/repos/*
+        file_contains: { file: .git/config, text: github.com/CocoaPods/Specs }
+
+  - id: cocoapods-private-repos
+    name:
+      en: "CocoaPods: private spec repos"
+      pt-BR: "CocoaPods: spec repos privados"
+      es: "CocoaPods: spec repos privados"
+    description:
+      en: "Private (company) spec repos. You will need pod repo add again afterwards."
+      pt-BR: "Repos privados (da empresa). Depois é preciso rodar pod repo add de novo."
+      es: "Repos privados (de la empresa). Después hay que ejecutar pod repo add de nuevo."
+    risk: redownload
+    auto_suggest: false
+    paths:
+      - glob: ~/.cocoapods/repos/*
+        exclude: [trunk]
+        file_not_contains: { file: .git/config, text: github.com/CocoaPods/Specs }
+
+  - id: swiftpm-cache
+    name:
+      en: Swift Package Manager cache
+      pt-BR: Cache do Swift Package Manager
+      es: Caché de Swift Package Manager
+    description:
+      en: "Repositories and artifacts of Swift packages."
+      pt-BR: "Repositórios e artefatos de pacotes Swift."
+      es: "Repositorios y artefactos de paquetes Swift."
+    risk: redownload
+    paths:
+      - ~/Library/Caches/org.swift.swiftpm/*

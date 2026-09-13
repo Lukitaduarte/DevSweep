@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(swift build:*)",
+      "Bash(swift test:*)",
+      "Bash(swift package resolve:*)",
+      "Bash(swift scripts/redact-screenshot.swift:*)",
+      "Bash(make app)",
+      "Bash(make test)",
+      "Bash(./scripts/build-app.sh)"
+    ]
+  }
+}

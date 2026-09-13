@@ -1,0 +1,48 @@
+# Starting point for a new stack: copy to stacks/<name>.yaml and edit.
+# Full reference: CONTRIBUTING.md. `swift test` validates this file too.
+stack:
+  id: example
+  name: Example Stack
+  icon: shippingbox          # any SF Symbol name
+  order: 100                 # lower runs and shows first
+
+matchers:
+  # Reusable matchers, referenced with `ref:` from any stack file.
+  example-runtime:
+    exe_name: [example, example-cli]
+
+processes:
+  - id: example-language-server
+    name: Example language server
+    description:
+      en: "Language server used by editors."
+      pt-BR: "Language server usado pelos editores."
+      es: "Language server que usan los editores."
+    match:
+      ref: example-runtime
+      command_contains: language-server
+    limbo: orphan            # orphan | never | { when: idle, minutes: 20, max_cpu: 1 } | { when: orphan_or_older, minutes: 30 }
+
+storage:
+  - id: example-cache
+    name: Example package cache
+    description:
+      en: "Downloaded packages. They come back on the next install."
+      pt-BR: "Pacotes baixados. Voltam no próximo install."
+      es: "Paquetes descargados. Vuelven en la próxima instalación."
+    risk: redownload         # safe | redownload | data_loss
+    suggest_above: 1GB
+    paths:
+      - ~/.example/cache
+      - glob: ~/.example/sdks/*
+        keep_newest: 1
+        sort_by: version
+
+  - id: example-inactive-builds
+    name: Builds of inactive Example projects
+    description: "Build output of {project_count} project(s) idle for {inactive_days}+ days: {projects}."
+    risk: safe
+    project:
+      markers: [example.toml]
+      activity: inactive
+      paths: [target]

@@ -1,5 +1,5 @@
 {
-  "name": "devsweep",
+  "name": "@lukitaduarte/devsweep",
   "version": "0.0.0",
   "description": "Installer for DevSweep, the macOS menu bar app that cleans dev processes and caches",
   "bin": {
@@ -28,6 +28,9 @@
     "url": "https://github.com/Lukitaduarte/DevSweep/issues"
   },
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "os": [
     "darwin"
   ],

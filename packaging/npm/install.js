@@ -10,7 +10,7 @@
 
 const { createHash } = require("node:crypto");
 const { execFileSync } = require("node:child_process");
-const { mkdtemp, rm, writeFile, readdir } = require("node:fs/promises");
+const { mkdtemp, mkdir, rm, writeFile, readdir } = require("node:fs/promises");
 const { existsSync } = require("node:fs");
 const { tmpdir, homedir } = require("node:os");
 const { join } = require("node:path");
@@ -108,6 +108,9 @@ async function main() {
       }
       await rm(target, { recursive: true, force: true });
     }
+    // Without this, copying into a folder that doesn't exist yet would turn the folder
+    // itself into the app bundle.
+    await mkdir(options.destination, { recursive: true });
     execFileSync("/bin/cp", ["-R", join(workingDirectory, app), options.destination]);
     console.log(`Installed ${target}`);
 

@@ -11,17 +11,26 @@ CONTENTS="$APP/Contents"
 RESOURCES="$CONTENTS/Resources"
 VERSION="${DEVSWEEP_VERSION:-$(tr -d '[:space:]' < version.txt)}"
 
-ARCH_FLAGS=()
 if [[ "${UNIVERSAL:-0}" == "1" ]]; then
-  ARCH_FLAGS=(--arch arm64 --arch x86_64)
+  # Asking for both architectures in one invocation switches SwiftPM to the Xcode build
+  # system, which fails with "duplicate output file" on some toolchains. Build each
+  # architecture on its own and merge the executables with lipo.
+  swift build -c release --arch arm64 --scratch-path .build/uni-arm64
+  swift build -c release --arch x86_64 --scratch-path .build/uni-x86_64
+  BIN_DIR="$(swift build -c release --arch arm64 --scratch-path .build/uni-arm64 --show-bin-path)"
+  X86_BIN_DIR="$(swift build -c release --arch x86_64 --scratch-path .build/uni-x86_64 --show-bin-path)"
+  mkdir -p build/universal
+  BIN="build/universal/DevSweep"
+  lipo -create -output "$BIN" "$BIN_DIR/DevSweep" "$X86_BIN_DIR/DevSweep"
+else
+  swift build -c release
+  BIN_DIR="$(swift build -c release --show-bin-path)"
+  BIN="$BIN_DIR/DevSweep"
 fi
-# ${ARCH_FLAGS[@]+…} keeps bash 3.2 (macOS default) happy when the array is empty.
-swift build -c release ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"}
-BIN_DIR="$(swift build -c release ${ARCH_FLAGS[@]+"${ARCH_FLAGS[@]}"} --show-bin-path)"
 
 rm -rf "$APP"
 mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Frameworks" "$RESOURCES/stacks" "$RESOURCES/locales"
-cp "$BIN_DIR/DevSweep" "$CONTENTS/MacOS/DevSweep"
+cp "$BIN" "$CONTENTS/MacOS/DevSweep"
 cp -R "$BIN_DIR/Sparkle.framework" "$CONTENTS/Frameworks/"
 install_name_tool -add_rpath "@executable_path/../Frameworks" "$CONTENTS/MacOS/DevSweep" 2>/dev/null || true
 

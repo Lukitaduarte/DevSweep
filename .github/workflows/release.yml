@@ -7,6 +7,12 @@ name: Release
 on:
   push:
     branches: [main]
+  # Rebuild and re-upload the assets of a release that already exists.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)publish assets for, e.g. v0.1.0"
+        required: true
 
 permissions:
   contents: read

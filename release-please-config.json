@@ -15,7 +15,8 @@
   ],
   "packages": {
     ".": {
-      "package-name": "devsweep"
+      "package-name": "devsweep",
+      "initial-version": "0.1.0"
     }
   }
 }

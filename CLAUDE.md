@@ -37,6 +37,7 @@ Never run anything that actually cleans or kills on the contributor's machine to
 - **Every UI string goes through `tr("key")`** and the key must exist in all three locale files with the same `{placeholders}`. `LocalizationTests` scans `Sources/` for `tr("…")` calls. Don't build keys dynamically.
 - **Stack texts** need `en`. Add `pt-BR` and `es` when you can.
 - **No personal data anywhere in the repo:** no absolute user paths, usernames, emails, company or private project names. Stack paths must start with `~/` or `${VAR:-~/…}`. `PrivacyTests` enforces this; don't weaken it, fix the content. Test fixtures use neutral paths like `/opt/…` or `/p/…`.
+- **Coverage stays at 90% or above** for everything except SwiftUI views, `AppModel`, `Updater` and `Notifier`, which need a UI host or system services. That exclusion list lives in two places that must stay in sync: `ignore:` in `codecov.yml` and `-ignore-filename-regex` in `.github/workflows/ci.yml`. Prefer making code testable (an option for a root path, a pure parsing function) over adding to the list.
 - **Binaries must not leak build paths either.** `scripts/build-app.sh` strips debug symbols (`strip -S -x`) and fails if the bundle still contains any home folder path. Don't remove that step.
 - **Safety invariants.** Keep them intact:
   - Every deletion goes through `SafeDelete.remove` (home-only, protected roots).

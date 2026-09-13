@@ -59,6 +59,20 @@ cosign verify-blob DevSweep-x.y.z.zip \
 
 The signature proves the file came out of this repository's release workflow, not from someone re-uploading a zip.
 
+### Verifying a download
+
+Every release asset is signed with [Sigstore](https://sigstore.dev) by the release workflow, and ships with an SBOM. To check a download before opening it:
+
+```bash
+cosign verify-blob DevSweep-x.y.z.zip \
+  --signature DevSweep-x.y.z.zip.sig \
+  --certificate DevSweep-x.y.z.zip.pem \
+  --certificate-identity-regexp '^https://github.com/Lukitaduarte/DevSweep/\.github/workflows/release\.yml@refs/tags/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+The signature proves the file came out of this repository's release workflow, not from someone re-uploading a zip.
+
 ### Build from source
 
 Requires macOS 14+ and Xcode 16+ (or a Swift 6 toolchain).

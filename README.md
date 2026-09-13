@@ -47,17 +47,22 @@ Prefer to do it by hand? Download `DevSweep-x.y.z.zip` from the [latest release]
 
 ### Verifying a download
 
-Every release asset is signed with [Sigstore](https://sigstore.dev) by the release workflow, and ships with an SBOM. To check a download before opening it:
+Every release asset is signed with [Sigstore](https://sigstore.dev) by the release workflow, carries SLSA build provenance and ships with an SBOM. The quickest check needs only the GitHub CLI:
+
+```bash
+gh attestation verify DevSweep-x.y.z.zip --repo Lukitaduarte/DevSweep
+```
+
+Or, with [cosign](https://docs.sigstore.dev/cosign/), against the signature bundle published next to the file:
 
 ```bash
 cosign verify-blob DevSweep-x.y.z.zip \
-  --signature DevSweep-x.y.z.zip.sig \
-  --certificate DevSweep-x.y.z.zip.pem \
+  --bundle DevSweep-x.y.z.zip.sigstore.json \
   --certificate-identity-regexp '^https://github\.com/Lukitaduarte/DevSweep/\.github/workflows/release\.yml@refs/(heads/main|tags/v.+)$' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
-The identity covers both refs the workflow runs from: `refs/heads/main` for a normal release and `refs/tags/vX.Y.Z` when the assets of a tag are rebuilt. The signature proves the file came out of this repository's release workflow, not from someone re-uploading a zip.
+The identity covers both refs the workflow runs from: `refs/heads/main` for a normal release and `refs/tags/vX.Y.Z` when the assets of a tag are rebuilt. Either check proves the file came out of this repository's release workflow, not from someone re-uploading a zip.
 
 ### Build from source
 

@@ -1,0 +1,37 @@
+{
+  "name": "devsweep",
+  "version": "0.0.0",
+  "description": "Installer for DevSweep, the macOS menu bar app that cleans dev processes and caches",
+  "bin": {
+    "devsweep": "install.js"
+  },
+  "type": "commonjs",
+  "files": [
+    "install.js",
+    "README.md"
+  ],
+  "keywords": [
+    "macos",
+    "cleaner",
+    "developer-tools",
+    "cache",
+    "xcode",
+    "flutter",
+    "gradle"
+  ],
+  "homepage": "https://github.com/Lukitaduarte/DevSweep",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lukitaduarte/DevSweep.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Lukitaduarte/DevSweep/issues"
+  },
+  "license": "MIT",
+  "os": [
+    "darwin"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

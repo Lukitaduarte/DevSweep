@@ -30,8 +30,20 @@ Available in English, Português (Brasil) and Español.
 
 ## Install
 
-1. Download `DevSweep-x.y.z.zip` from the [latest release](https://github.com/Lukitaduarte/DevSweep/releases/latest), unzip it and move **DevSweep.app** to `/Applications`.
-2. Open it. Releases aren't notarized by Apple yet, so the first time macOS blocks it: right-click the app → **Open** → **Open** (on macOS 15+, **System Settings → Privacy & Security → Open Anyway**). You only do this once; updates install normally.
+```bash
+npx devsweep                                                        # one command, no Homebrew
+```
+
+or with Homebrew:
+
+```bash
+brew tap lukitaduarte/devsweep https://github.com/Lukitaduarte/DevSweep
+brew install --cask devsweep
+```
+
+Both download the release from GitHub, check it against the published SHA-256 and put **DevSweep.app** in `/Applications`.
+
+Prefer to do it by hand? Download `DevSweep-x.y.z.zip` from the [latest release](https://github.com/Lukitaduarte/DevSweep/releases/latest), unzip it and move the app to `/Applications`. In that case macOS blocks the first launch, because releases aren't notarized by Apple yet: right-click the app → **Open** → **Open** (on macOS 15+, **System Settings → Privacy & Security → Open Anyway**). You only do this once, and updates install normally. The two commands above avoid that prompt, since files downloaded by a script aren't quarantined.
 
 ### Verifying a download
 
@@ -41,11 +53,11 @@ Every release asset is signed with [Sigstore](https://sigstore.dev) by the relea
 cosign verify-blob DevSweep-x.y.z.zip \
   --signature DevSweep-x.y.z.zip.sig \
   --certificate DevSweep-x.y.z.zip.pem \
-  --certificate-identity-regexp '^https://github.com/Lukitaduarte/DevSweep/\.github/workflows/release\.yml@refs/tags/' \
+  --certificate-identity-regexp '^https://github\.com/Lukitaduarte/DevSweep/\.github/workflows/release\.yml@refs/(heads/main|tags/v.+)$' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
 
-The signature proves the file came out of this repository's release workflow, not from someone re-uploading a zip.
+The identity covers both refs the workflow runs from: `refs/heads/main` for a normal release and `refs/tags/vX.Y.Z` when the assets of a tag are rebuilt. The signature proves the file came out of this repository's release workflow, not from someone re-uploading a zip.
 
 ### Build from source
 
@@ -104,6 +116,10 @@ Found a problem? See [SECURITY.md](SECURITY.md).
 ## Contributing
 
 New stacks, better rules and translations are very welcome, and most need no Swift. See [CONTRIBUTING.md](CONTRIBUTING.md). If you use [Claude Code](https://claude.com/claude-code), [`CLAUDE.md`](CLAUDE.md) and the skills in [`.claude/skills`](.claude/skills) walk it through adding stacks, translations, investigating detections and preparing screenshots.
+
+## Maintaining
+
+Cutting a release is merging the pull request release-please keeps open; everything else is automated. [`docs/MAINTAINING.md`](docs/MAINTAINING.md) covers the one-time setup — signing key, repository settings, Codecov, CodeRabbit, the Homebrew tap and npm — and [`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md) covers the release flow itself and what to do when part of it fails.
 
 ## Project layout
 

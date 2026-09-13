@@ -18,6 +18,9 @@ rm -rf "$OUT"
 mkdir -p "$OUT"
 ditto -c -k --sequesterRsrc --keepParent build/DevSweep.app "$OUT/$ZIP"
 (cd "$OUT" && shasum -a 256 "$ZIP" > "$ZIP.sha256")
+# Same archive under a stable name, so the Homebrew cask can point at
+# releases/latest/download/DevSweep.zip and never need an update.
+cp "$OUT/$ZIP" "$OUT/DevSweep.zip"
 echo "✓ $OUT/$ZIP"
 
 if [[ -z "${SPARKLE_PRIVATE_KEY:-}" ]]; then

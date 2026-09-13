@@ -1,53 +1,53 @@
 ---
 name: release
-description: Cut a DevSweep release or fix the release pipeline, including the one-time maintainer setup of Sparkle signing keys, repository secrets, Codecov and CodeRabbit. Use when asked to publish a version, when the release PR, appcast or auto-update misbehaves, or when setting up the repository on GitHub.
+description: Cut a DevSweep release or fix the release pipeline - the release pull request, the published assets, the Sparkle appcast, the Homebrew cask or the npx installer. Use when asked to publish a version, when a release workflow fails, or when auto-update doesn't offer a new version.
 ---
 
 # Release DevSweep
 
-## How it works
+One-time account and token setup (signing key, Codecov, CodeRabbit, Homebrew tap, npm) is in
+[`docs/MAINTAINING.md`](../../../docs/MAINTAINING.md), not here.
 
-1. Commits on `main` follow Conventional Commits (`feat:`, `fix:`, `perf:`, `deps:`; `feat!:` or a `BREAKING CHANGE:` footer for majors).
-2. `.github/workflows/release.yml` runs release-please on every push to `main`. It keeps a "chore(main): release x.y.z" PR updated with the bumped `version.txt`, `.release-please-manifest.json` and `CHANGELOG.md`.
-3. **Merging that PR** creates the `vX.Y.Z` tag and the GitHub release with the changelog. The `build` job then:
+## How a release happens
+
+1. Commits on `main` follow Conventional Commits (`feat:`, `fix:`, `perf:`, `deps:`; `feat!:` or a `BREAKING CHANGE:` footer for a major).
+2. `.github/workflows/release.yml` runs release-please on every push to `main`, which keeps a "chore(main): release x.y.z" pull request updated with `version.txt`, `.release-please-manifest.json` and `CHANGELOG.md`.
+3. **Merging that pull request** creates the `vX.Y.Z` tag and the GitHub release with the changelog. The rest of the workflow then:
    - runs the tests;
-   - builds a universal app with `UNIVERSAL=1 scripts/build-app.sh`, with the version injected from release-please;
-   - runs `scripts/package-release.sh` to zip the app, write its SHA-256, sign the zip with Sparkle's `sign_update` and write `appcast.xml` with the release notes;
-   - generates an SPDX SBOM and signs the zip and the SBOM with Sigstore (keyless, using the workflow's OIDC identity, so there is no key to leak);
-   - uploads everything to the release.
+   - builds a universal app (`UNIVERSAL=1 scripts/build-app.sh`) with the version from release-please;
+   - runs `scripts/package-release.sh`: zip, SHA-256, Sparkle `sign_update` signature and `appcast.xml` with the release notes;
+   - generates an SPDX SBOM and signs the zip and SBOM with Sigstore (keyless, via the workflow's OIDC identity);
+   - uploads everything to the release, including a copy of the zip under the stable name `DevSweep.zip` that the Homebrew cask points at;
+   - publishes the npm installer through npm trusted publishing (OIDC, no token), skipped unless the `PUBLISH_NPM` repository variable is `true`.
+4. Installed apps check `https://github.com/<owner>/DevSweep/releases/latest/download/appcast.xml` once a day, show an update card with a changelog link, and install after Sparkle verifies the signature.
 
-To rebuild the assets of a tag that already exists (a release whose build failed, for example), run the workflow by hand: `gh workflow run release.yml -f tag=v0.1.0`. It checks out that tag, rebuilds and re-uploads with `--clobber`.
-4. Installed apps read `https://github.com/<repo>/releases/latest/download/appcast.xml` once a day (`SUFeedURL` in `Resources/Info.plist`). They show an "update available" card with a Changelog link, and install with one click after Sparkle verifies the EdDSA signature.
+So: to release, review and merge the release pull request. Nothing else is manual.
 
-To release: review and merge the release PR. Nothing else is manual.
+## Republishing the assets of an existing tag
 
-## One-time setup (maintainer)
+When a release exists but its assets are missing or wrong (a build that failed, for example):
 
-1. **Sparkle keys.** Run `scripts/setup-release-keys.sh` (or pass `owner/repo`). It:
-   - creates or reuses the EdDSA key in the login keychain;
-   - writes `Resources/sparkle-public-key.txt`, which must be committed (it's public);
-   - sets the `SPARKLE_PRIVATE_KEY` secret with `gh`.
+```bash
+gh workflow run release.yml -f tag=v0.1.0
+```
 
-   Back up the private key (`generate_keys -x`). If it's lost, existing installs can never verify an update again.
-2. **Codecov.** Sign in at codecov.io with GitHub, enable the repo and add the `CODECOV_TOKEN` secret. Uploads from forks work without it.
-3. **CodeRabbit.** Install the CodeRabbit GitHub App on the repository (free for public repos). `.coderabbit.yaml` holds the review instructions.
-4. **Repository settings.**
-   - Enable private vulnerability reporting, Dependabot alerts and secret scanning.
-   - Protect `main`: require the CI, CodeQL and secret-scan checks.
-   - Allow GitHub Actions to create pull requests (Settings → Actions → General), which release-please needs.
-5. **Scorecard.** Its badge appears after the first run on `main`.
+It checks out that tag, rebuilds and re-uploads with `--clobber`.
 
 ## Troubleshooting
 
-- **No release PR:** there are no `feat`/`fix`/`perf`/`deps` commits since the last release, or Actions can't create PRs (step 4).
-- **Release published without `appcast.xml`:** `SPARKLE_PRIVATE_KEY` is missing (the job logs a warning). Fix the secret, then rerun the `build` job.
-- **Installed app never offers updates:** the build had no public key, so `Updater.isEnabled` is false and Settings says the build can't update itself. Check that `Resources/sparkle-public-key.txt` was committed before the release. Also check that the appcast `sparkle:version` is higher than the installed `CFBundleVersion`.
-- **"Signature invalid" in Sparkle:** the public key in the app doesn't match the secret. Re-run the setup script and publish a new release; old installs need a manual download once.
-- **Gatekeeper warning on first install:** releases are ad-hoc signed and not notarized. The README tells users to right-click → Open once. Notarization needs an Apple Developer ID; if one becomes available, add `codesign --options runtime` with the identity and `xcrun notarytool submit --wait` to `package-release.sh`, with credentials as secrets.
+- **No release pull request.** Either there are no `feat`/`fix`/`perf`/`deps` commits since the last release, or Actions isn't allowed to create pull requests (Settings → Actions → General).
+- **The first release proposes 1.0.0.** Without a previous release, release-please falls back to its default. `initial-version` in `release-please-config.json` decides it.
+- **Release published without `appcast.xml`.** `SPARKLE_PRIVATE_KEY` is missing; the packaging step logs a warning. Fix the secret and re-run the workflow for that tag.
+- **Installed apps never offer the update.** Check that `Resources/sparkle-public-key.txt` was committed before the build (without it `Updater.isEnabled` is false and Settings says the build can't update itself), and that the appcast's `sparkle:version` is higher than the installed `CFBundleVersion`.
+- **"Signature invalid" in Sparkle.** The key in the app doesn't match the secret that signed the archive. Publish a new release with matching keys; copies installed from the mismatched build need a manual download once.
+- **`duplicate output file` while building.** Don't pass both architectures to one `swift build`; `scripts/build-app.sh` builds each one separately and merges them with `lipo`.
+- **Gatekeeper warning on first launch.** Releases are ad-hoc signed and not notarized. Installing with Homebrew or `npx` avoids it, since scripted downloads aren't quarantined. Notarization needs an Apple Developer ID; with one, add `codesign --options runtime` with the identity and `xcrun notarytool submit --wait` to `scripts/package-release.sh`.
 
-## Testing the packaging locally
+## Trying the packaging locally
 
 ```bash
 UNIVERSAL=1 DEVSWEEP_VERSION=0.0.0-test scripts/build-app.sh
-DEVSWEEP_VERSION=0.0.0-test TAG=v0.0.0-test GITHUB_REPOSITORY=owner/repo scripts/package-release.sh   # without SPARKLE_PRIVATE_KEY: zip + sha only
+DEVSWEEP_VERSION=0.0.0-test TAG=v0.0.0-test GITHUB_REPOSITORY=<owner>/DevSweep scripts/package-release.sh
 ```
+
+Without `SPARKLE_PRIVATE_KEY` this produces the zip and its checksum and skips the appcast.

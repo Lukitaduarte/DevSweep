@@ -3,7 +3,11 @@ name: Release
 # release-please keeps a "chore(main): release x.y.z" pull request up to date from
 # Conventional Commits. Merging it tags the version, publishes the GitHub release with
 # the changelog, and the build job attaches the app, the Sparkle appcast, an SBOM and
-# Sigstore signatures to it.
+# Sigstore signatures to it. The last job publishes the npm installer through npm trusted
+# publishing (OIDC, no token), once the PUBLISH_NPM repository variable is set to "true".
+#
+# The Homebrew cask (Casks/devsweep.rb) needs no job: it points at the stable
+# releases/latest/download/DevSweep.zip URL.
 #
 # The workflow can also be run by hand to (re)build the assets of an existing tag.
 
@@ -85,3 +89,40 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$TAG" build/release/* --clobber
+
+  publish-npm:
+    needs: [release-please, build]
+    # Set the PUBLISH_NPM repository variable to "true" once the package exists on npm and
+    # trusted publishing is configured for it (see docs/MAINTAINING.md).
+    if: ${{ always() && needs.build.result == 'success' && vars.PUBLISH_NPM == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm trusted publishing (OIDC), no token involved
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || needs.release-please.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Use an npm that speaks OIDC
+        run: npm install -g npm@^11.5.1
+      - name: Publish the installer to npm
+        run: |
+          cd packaging/npm
+          VERSION="${TAG#v}"
+          npm version "$VERSION" --no-git-tag-version
+          NAME="$(node -p 'require("./package.json").name')"
+          # Rebuilding the assets of an existing tag reaches this step again, and npm
+          # refuses to publish a name@version twice.
+          if npm view "${NAME}@${VERSION}" version >/dev/null 2>&1; then
+            echo "::notice::${NAME}@${VERSION} is already on npm."
+          else
+            npm publish --access public
+          fi
+

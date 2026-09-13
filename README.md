@@ -31,7 +31,7 @@ Available in English, Português (Brasil) and Español.
 ## Install
 
 ```bash
-npx devsweep                                                        # one command, no Homebrew
+npx @lukitaduarte/devsweep                                          # one command, no Homebrew
 ```
 
 or with Homebrew:

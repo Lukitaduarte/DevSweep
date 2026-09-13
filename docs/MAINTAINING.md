@@ -61,7 +61,7 @@ with no tap at all.
 
 ## npm installer (optional)
 
-The `npx devsweep` installer is published with **trusted publishing**: npm trusts this
+The `npx @lukitaduarte/devsweep` installer is published with **trusted publishing**: npm trusts this
 repository's release workflow directly through OIDC, so no token is ever stored. npm warns
 against automation tokens for CI for good reason — a leaked one can publish anything, forever.
 
@@ -69,14 +69,17 @@ Trusted publishing can only be attached to a package that already exists, so the
 goes up by hand, from a terminal, with no token at all:
 
 ```bash
-npm view devsweep                       # a 404 means the name is still free
 npm login                               # asks for your 2FA code
 cd packaging/npm
 npm version <version> --no-git-tag-version
 npm publish --access public             # asks for the 2FA code again
 ```
 
-Then, on <https://www.npmjs.com/package/devsweep/access>, add a trusted publisher:
+The package is scoped (`@<user>/devsweep`) on purpose: npm rejects unscoped names that are
+*similar* to an existing package, not only names already taken, and `devsweep` collides with
+`dev-sweep`. A scope belongs to you, so it can't be refused.
+
+Then, on <https://www.npmjs.com/package/@<user>/devsweep/access>, add a trusted publisher:
 
 | Field | Value |
 |---|---|
@@ -99,8 +102,6 @@ Releases run npm 11 on Node 22 (the versions that speak OIDC) and publish with
 `id-token: write`, which also attaches provenance automatically. Without the `PUBLISH_NPM`
 variable the job is skipped and everything else in the release still runs.
 
-If the name `devsweep` is taken by the time you get there, rename the package in
-`packaging/npm/package.json` to `@<user>/devsweep`; people then run `npx @<user>/devsweep`.
 
 ## Secrets and variables at a glance
 
@@ -108,7 +109,7 @@ If the name `devsweep` is taken by the time you get there, rename the package in
 |---|---|---|---|
 | `SPARKLE_PRIVATE_KEY` | secret | signing the update archive | release publishes without `appcast.xml`, installed apps see no update |
 | `CODECOV_TOKEN` | secret | coverage upload | coverage isn't reported for pushes |
-| `PUBLISH_NPM` | variable | the npm publish job | `npx devsweep` keeps installing the previous version |
+| `PUBLISH_NPM` | variable | the npm publish job | `npx @lukitaduarte/devsweep` keeps installing the previous version |
 
 Only two secrets exist, and neither can publish anything on its own: npm goes through trusted
 publishing and Homebrew reads a plain URL.

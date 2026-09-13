@@ -25,7 +25,7 @@ they are SHOULD or SUGGESTED criteria.
 | Field | Value |
 |---|---|
 | Project name | DevSweep |
-| Homepage and repository | `https://github.com/<owner>/DevSweep` |
+| Homepage and repository | `https://github.com/Lukitaduarte/DevSweep` |
 | Programming language | Swift |
 
 ## Maintenance and reporting
@@ -35,7 +35,7 @@ they are SHOULD or SUGGESTED criteria.
 | `maintained` | Met | Under active development with regular releases; issues and pull requests are triaged by the maintainer |
 | `report_responses` | Met | No external bug reports yet; GitHub Issues is enabled and monitored |
 | `enhancement_responses` | Met | No enhancement requests yet; they go to GitHub Issues and get an answer, even when it's no |
-| `report_archive` | Met | `https://github.com/<owner>/DevSweep/issues` — public and searchable |
+| `report_archive` | Met | `https://github.com/Lukitaduarte/DevSweep/issues` — public and searchable |
 | `vulnerability_report_process` | Met | `SECURITY.md`: don't open a public issue, use the private channel |
 | `vulnerability_report_private` | Met | GitHub private vulnerability reporting is enabled: `/security/advisories/new` |
 | `vulnerability_report_response` | N/A | No vulnerability reports received. `SECURITY.md` promises a first reply within a week, inside the 14-day requirement |

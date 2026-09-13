@@ -38,11 +38,14 @@ npx @lukitaduarte/devsweep                                          # one comman
 or with Homebrew:
 
 ```bash
+brew trust --tap lukitaduarte/devsweep
 brew tap lukitaduarte/devsweep https://github.com/Lukitaduarte/DevSweep
 brew install --cask devsweep
 ```
 
-Both download the release from GitHub, check it against the published SHA-256 and put **DevSweep.app** in `/Applications`.
+Homebrew 7 refuses to load casks from a tap you haven't trusted, which is why the first command exists — it's Homebrew asking you to confirm you meant to install software from outside its official taps, and it's a good habit to check what a tap contains before trusting it. Here that's a [single file](Casks/devsweep.rb).
+
+Both paths download the release from GitHub, check it against the published SHA-256 and put **DevSweep.app** in `/Applications`.
 
 Prefer to do it by hand? Download `DevSweep-x.y.z.zip` from the [latest release](https://github.com/Lukitaduarte/DevSweep/releases/latest), unzip it and move the app to `/Applications`. In that case macOS blocks the first launch, because releases aren't notarized by Apple yet: right-click the app → **Open** → **Open** (on macOS 15+, **System Settings → Privacy & Security → Open Anyway**). You only do this once, and updates install normally. The two commands above avoid that prompt, since files downloaded by a script aren't quarantined.
 

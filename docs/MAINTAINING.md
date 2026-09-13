@@ -45,9 +45,14 @@ the app again by hand. It's in the login keychain as *Private key for signing Sp
 Nothing to set up. `Casks/devsweep.rb` lives in this repository and this repository is the tap:
 
 ```bash
+brew trust --tap <owner>/devsweep
 brew tap <owner>/devsweep https://github.com/<owner>/DevSweep
 brew install --cask devsweep
 ```
+
+Homebrew 7 refuses to load casks from an untrusted third-party tap, so the trust command is part
+of the flow for everyone — it is not something the maintainer can configure away. Getting the
+cask into the official `homebrew/cask` repository is what would remove it.
 
 The two-argument form of `brew tap` is what allows a repository that isn't named
 `homebrew-something`. The cask uses `version :latest` with `sha256 :no_check` against the stable

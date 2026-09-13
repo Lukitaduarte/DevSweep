@@ -1,7 +1,10 @@
 # Homebrew cask, served straight from this repository:
 #
+#   brew trust --tap lukitaduarte/devsweep
 #   brew tap lukitaduarte/devsweep https://github.com/Lukitaduarte/DevSweep
 #   brew install --cask devsweep
+#
+# Homebrew 7 refuses casks from untrusted third-party taps, hence the first command.
 #
 # It points at the stable "latest release" URL and lets the app update itself through
 # Sparkle, so this file doesn't change from release to release.

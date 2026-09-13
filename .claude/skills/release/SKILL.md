@@ -36,6 +36,8 @@ To release: review and merge the release PR. Nothing else is manual.
    - Protect `main`: require the CI, CodeQL and secret-scan checks.
    - Allow GitHub Actions to create pull requests (Settings → Actions → General), which release-please needs.
 5. **Scorecard.** Its badge appears after the first run on `main`.
+6. **Homebrew (optional).** Create a public repository named `homebrew-tap` under the same owner, then add a `HOMEBREW_TAP_TOKEN` secret: a fine-grained personal access token with *Contents: read and write* on that repository only. Each release rewrites `Casks/devsweep.rb` there from `packaging/homebrew/devsweep.rb`, so `brew install --cask <owner>/tap/devsweep` gets the new version.
+7. **npm (optional).** Create an npm automation token and add it as `NPM_TOKEN`. Each release publishes `packaging/npm` (the `npx devsweep` installer) with provenance. Without the secret the job logs a notice and is skipped.
 
 ## Troubleshooting
 

@@ -3,7 +3,8 @@ name: Release
 # release-please keeps a "chore(main): release x.y.z" pull request up to date from
 # Conventional Commits. Merging it tags the version, publishes the GitHub release with
 # the changelog, and the build job attaches the app, the Sparkle appcast, an SBOM and
-# Sigstore signatures to it.
+# Sigstore signatures to it. The last two jobs publish the npm installer and update the
+# Homebrew cask, each one only when its secret is configured.
 #
 # The workflow can also be run by hand to (re)build the assets of an existing tag.
 
@@ -85,3 +86,71 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$TAG" build/release/* --clobber
+
+  publish-npm:
+    needs: [release-please, build]
+    if: ${{ always() && needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # npm provenance
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || needs.release-please.outputs.tag_name }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      - name: Publish the installer to npm
+        if: ${{ env.NPM_TOKEN != '' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          cd packaging/npm
+          npm version "${TAG#v}" --no-git-tag-version
+          npm publish --provenance --access public
+      - name: Explain the skip
+        if: ${{ env.NPM_TOKEN == '' }}
+        run: echo "::notice::NPM_TOKEN is not set, so the npm installer still ships the previous version."
+
+  update-homebrew-tap:
+    needs: [release-please, build]
+    if: ${{ always() && needs.build.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || needs.release-please.outputs.tag_name }}
+      TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}
+          persist-credentials: false
+      - name: Update the cask in the tap repository
+        if: ${{ env.TAP_TOKEN != '' }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          curl -fsSL -o checksum.txt \
+            "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/DevSweep-${VERSION}.zip.sha256"
+          CHECKSUM="$(awk '{print $1}' checksum.txt)"
+
+          git clone --depth 1 \
+            "https://x-access-token:${TAP_TOKEN}@github.com/${GITHUB_REPOSITORY_OWNER}/homebrew-tap.git" tap
+          mkdir -p tap/Casks
+          sed -e "s/VERSION/${VERSION}/" -e "s/SHA256/${CHECKSUM}/" packaging/homebrew/devsweep.rb > tap/Casks/devsweep.rb
+
+          BOT="41898282+github-actions[bot]"
+          cd tap
+          git -c "user.name=github-actions[bot]" -c "user.email=${BOT}@users.noreply.github.com" \
+            commit -am "devsweep ${VERSION}" || { echo "cask already up to date"; exit 0; }
+          git push
+      - name: Explain the skip
+        if: ${{ env.TAP_TOKEN == '' }}
+        run: echo "::notice::HOMEBREW_TAP_TOKEN is not set, so the Homebrew cask was not updated."

@@ -30,8 +30,14 @@ Available in English, Português (Brasil) and Español.
 
 ## Install
 
-1. Download `DevSweep-x.y.z.zip` from the [latest release](https://github.com/Lukitaduarte/DevSweep/releases/latest), unzip it and move **DevSweep.app** to `/Applications`.
-2. Open it. Releases aren't notarized by Apple yet, so the first time macOS blocks it: right-click the app → **Open** → **Open** (on macOS 15+, **System Settings → Privacy & Security → Open Anyway**). You only do this once; updates install normally.
+```bash
+brew install --cask lukitaduarte/tap/devsweep   # Homebrew
+npx devsweep                                    # or without Homebrew
+```
+
+Both download the release from GitHub, check it against the published SHA-256 and put **DevSweep.app** in `/Applications`.
+
+Prefer to do it by hand? Download `DevSweep-x.y.z.zip` from the [latest release](https://github.com/Lukitaduarte/DevSweep/releases/latest), unzip it and move the app to `/Applications`. In that case macOS blocks the first launch, because releases aren't notarized by Apple yet: right-click the app → **Open** → **Open** (on macOS 15+, **System Settings → Privacy & Security → Open Anyway**). You only do this once, and updates install normally. The two commands above avoid that prompt, since files downloaded by a script aren't quarantined.
 
 ### Verifying a download
 

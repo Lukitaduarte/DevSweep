@@ -31,8 +31,14 @@ Available in English, Português (Brasil) and Español.
 ## Install
 
 ```bash
-brew install --cask lukitaduarte/tap/devsweep   # Homebrew
-npx devsweep                                    # or without Homebrew
+npx devsweep                                                        # one command, no Homebrew
+```
+
+or with Homebrew:
+
+```bash
+brew tap lukitaduarte/devsweep https://github.com/Lukitaduarte/DevSweep
+brew install --cask devsweep
 ```
 
 Both download the release from GitHub, check it against the published SHA-256 and put **DevSweep.app** in `/Applications`.

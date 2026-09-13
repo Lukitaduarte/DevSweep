@@ -40,26 +40,24 @@ the app again by hand. It's in the login keychain as *Private key for signing Sp
   live in `.coderabbit.yaml`.
 - **OpenSSF Scorecard.** Nothing to configure; the badge appears after the first run on `main`.
 
-## Homebrew tap (optional)
+## Homebrew
 
-Homebrew installs from a "tap", which is a public repository whose name starts with `homebrew-`.
-
-```bash
-gh repo create <owner>/homebrew-tap --public \
-  --description "Homebrew tap for DevSweep" --add-readme
-```
-
-Create a **fine-grained** token at <https://github.com/settings/personal-access-tokens/new>:
-resource owner `<owner>`, *Only select repositories* → `homebrew-tap`, permission
-*Contents: Read and write*, nothing else. Then:
+Nothing to set up. `Casks/devsweep.rb` lives in this repository and this repository is the tap:
 
 ```bash
-gh secret set HOMEBREW_TAP_TOKEN --repo <owner>/DevSweep
+brew tap <owner>/devsweep https://github.com/<owner>/DevSweep
+brew install --cask devsweep
 ```
 
-The workflow's own token can't be used, because it only reaches the repository it runs in.
-From the next release on, `Casks/devsweep.rb` is written into the tap and
-`brew install --cask <owner>/tap/devsweep` works.
+The two-argument form of `brew tap` is what allows a repository that isn't named
+`homebrew-something`. The cask uses `version :latest` with `sha256 :no_check` against the stable
+`releases/latest/download/DevSweep.zip` URL, and `auto_updates true` because the app updates
+itself through Sparkle — so the file never needs to be touched again, and no release job
+rewrites it.
+
+If DevSweep ever becomes "notable" enough for the official `homebrew/cask` repository (roughly
+75 stars or 30 forks), submitting it there would make plain `brew install --cask devsweep` work
+with no tap at all.
 
 ## npm installer (optional)
 
@@ -77,9 +75,9 @@ package in `packaging/npm/package.json` to `@<user>/devsweep`; people then run
 
 ## When a token expires
 
-Fine-grained GitHub tokens last at most a year and npm tokens can expire too. The release keeps
-working when they do — the Homebrew and npm jobs log a notice and skip — so watch for that notice
-in the release run, create a new token the same way and overwrite the secret with `gh secret set`.
+npm tokens can expire. The release keeps working when that happens — the npm job logs a notice
+and skips — so watch for that notice in the release run, create a new token the same way and
+overwrite the secret with `gh secret set`.
 
 ## Secrets at a glance
 
@@ -87,5 +85,4 @@ in the release run, create a new token the same way and overwrite the secret wit
 |---|---|---|
 | `SPARKLE_PRIVATE_KEY` | signing the update archive | release publishes without `appcast.xml`, installed apps see no update |
 | `CODECOV_TOKEN` | coverage upload | coverage isn't reported for pushes |
-| `HOMEBREW_TAP_TOKEN` | updating the cask in the tap | `brew upgrade` keeps the previous version |
 | `NPM_TOKEN` | publishing the npx installer | `npx devsweep` keeps installing the previous version |

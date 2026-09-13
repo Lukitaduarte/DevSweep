@@ -17,8 +17,8 @@ One-time account and token setup (signing key, Codecov, CodeRabbit, Homebrew tap
    - builds a universal app (`UNIVERSAL=1 scripts/build-app.sh`) with the version from release-please;
    - runs `scripts/package-release.sh`: zip, SHA-256, Sparkle `sign_update` signature and `appcast.xml` with the release notes;
    - generates an SPDX SBOM and signs the zip and SBOM with Sigstore (keyless, via the workflow's OIDC identity);
-   - uploads everything to the release;
-   - publishes the npm installer and updates the Homebrew cask, each skipped with a notice when its secret is absent.
+   - uploads everything to the release, including a copy of the zip under the stable name `DevSweep.zip` that the Homebrew cask points at;
+   - publishes the npm installer, skipped with a notice when `NPM_TOKEN` is absent.
 4. Installed apps check `https://github.com/<owner>/DevSweep/releases/latest/download/appcast.xml` once a day, show an update card with a changelog link, and install after Sparkle verifies the signature.
 
 So: to release, review and merge the release pull request. Nothing else is manual.

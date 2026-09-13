@@ -106,12 +106,20 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}
           persist-credentials: false
+      # Node 24 ships npm 11, which is what speaks OIDC (trusted publishing needs >= 11.5.1).
+      # Installing npm separately would add an unpinned dependency to the release.
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22
+          node-version: 24
           registry-url: https://registry.npmjs.org
-      - name: Use an npm that speaks OIDC
-        run: npm install -g npm@^11.5.1
+      - name: Check npm can use trusted publishing
+        run: |
+          version="$(npm --version)"
+          echo "npm $version"
+          if [ "$(printf '%s\n11.5.1\n' "$version" | sort -V | head -1)" != "11.5.1" ]; then
+            echo "::error::npm >= 11.5.1 is required for trusted publishing, got $version"
+            exit 1
+          fi
       - name: Publish the installer to npm
         run: |
           cd packaging/npm

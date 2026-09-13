@@ -38,12 +38,12 @@ npx @lukitaduarte/devsweep                                          # one comman
 or with Homebrew:
 
 ```bash
-brew trust --tap lukitaduarte/devsweep
+brew trust --tap https://github.com/Lukitaduarte/DevSweep
 brew tap lukitaduarte/devsweep https://github.com/Lukitaduarte/DevSweep
 brew install --cask devsweep
 ```
 
-Homebrew 7 refuses to load casks from a tap you haven't trusted, which is why the first command exists — it's Homebrew asking you to confirm you meant to install software from outside its official taps, and it's a good habit to check what a tap contains before trusting it. Here that's a [single file](Casks/devsweep.rb).
+Homebrew 7 refuses to load casks from a tap you haven't trusted, which is why the first command exists — it's Homebrew asking you to confirm you meant to install software from outside its official taps, and it's a good habit to read what a tap contains before trusting it. Here that's a [single file](Casks/devsweep.rb). The trust command names the URL rather than `lukitaduarte/devsweep`, because a tap whose repository isn't named `homebrew-something` is matched by URL only.
 
 Both paths download the release from GitHub, check it against the published SHA-256 and put **DevSweep.app** in `/Applications`.
 

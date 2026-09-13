@@ -1,6 +1,6 @@
 {
   "name": "@lukitaduarte/devsweep",
-  "version": "0.1.1",
+  "version": "0.0.0",
   "description": "Installer for DevSweep, the macOS menu bar app that cleans dev processes and caches",
   "bin": {
     "devsweep": "install.js"

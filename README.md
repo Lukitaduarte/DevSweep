@@ -7,6 +7,7 @@
 [![CodeRabbit Reviews](https://img.shields.io/coderabbit/prs/github/Lukitaduarte/DevSweep?labelColor=171717&color=FF570A&label=CodeRabbit%20reviews)](https://coderabbit.ai)
 [![Latest release](https://img.shields.io/github/v/release/Lukitaduarte/DevSweep)](https://github.com/Lukitaduarte/DevSweep/releases/latest)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple)](#install)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14624/badge)](https://www.bestpractices.dev/projects/14624)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A macOS menu bar app for developers that tells you **what** to clean and **when**, then cleans it in one click: dev processes stuck in limbo, and the caches, builds and simulator data that Flutter, iOS, Android, Node/Next.js and Go leave behind.

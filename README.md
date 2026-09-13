@@ -113,7 +113,7 @@ New stacks, better rules and translations are very welcome, and most need no Swi
 
 ## Maintaining
 
-Cutting a release is merging the pull request release-please keeps open; everything else is automated. The one-time setup (signing keys, repository secrets, Codecov, CodeRabbit, the Homebrew tap and npm) and the troubleshooting steps live in [`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md).
+Cutting a release is merging the pull request release-please keeps open; everything else is automated. [`docs/MAINTAINING.md`](docs/MAINTAINING.md) covers the one-time setup — signing key, repository settings, Codecov, CodeRabbit, the Homebrew tap and npm — and [`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md) covers the release flow itself and what to do when part of it fails.
 
 ## Project layout
 

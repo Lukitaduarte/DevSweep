@@ -59,4 +59,4 @@ Merging the release PR that release-please opens publishes the GitHub release, a
 - `add-language`: add or update a translation.
 - `investigate-detection`: explain why something is or isn't detected or suggested.
 - `redact-screenshots`: prepare screenshots for the README or a PR without leaking personal data.
-- `release`: cut a release, and the one-time setup of signing keys and secrets.
+- `release`: cut a release or fix the release pipeline. One-time account and token setup lives in `docs/MAINTAINING.md`.

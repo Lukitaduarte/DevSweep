@@ -1,0 +1,102 @@
+# Go. Schema reference: CONTRIBUTING.md
+stack:
+  id: go
+  name: Go
+  icon: hare
+  order: 50
+
+processes:
+  - id: gopls
+    name: gopls
+    description:
+      en: "Go language server."
+      pt-BR: "Language server do Go."
+      es: "Language server de Go."
+    match:
+      exe_name: gopls
+
+  - id: go-run
+    name:
+      en: go run binaries
+      pt-BR: Binários de go run
+      es: Binarios de go run
+    description:
+      en: "Programs started with go run whose terminal is already closed."
+      pt-BR: "Programas iniciados com go run cujo terminal já fechou."
+      es: "Programas iniciados con go run cuya terminal ya se cerró."
+    match:
+      all:
+        - exe_path_contains: /go-build
+        - exe_path_contains: /exe/
+
+  - id: go-tools
+    name: air / delve
+    description:
+      en: "Go hot reload and debugger."
+      pt-BR: "Hot reload e debugger do Go."
+      es: "Hot reload y depurador de Go."
+    match:
+      exe_name: [air, dlv, dlv-dap]
+
+storage:
+  - id: go-build
+    name: Go build cache
+    description:
+      en: "go clean -cache. Recompiled on the next build."
+      pt-BR: "go clean -cache. Recompilado no próximo build."
+      es: "go clean -cache. Se recompila en el próximo build."
+    risk: safe
+    suggest_above: 1GB
+    paths:
+      - ~/Library/Caches/go-build
+    run:
+      - ["go", "clean", "-cache"]
+    then_delete: true
+
+  - id: go-tool-caches
+    name:
+      en: gopls and golangci-lint caches
+      pt-BR: Caches do gopls e golangci-lint
+      es: Cachés de gopls y golangci-lint
+    description:
+      en: "Language server indexes and linter results."
+      pt-BR: "Índices do language server e resultados do linter."
+      es: "Índices del language server y resultados del linter."
+    risk: safe
+    suggest_above: 500MB
+    paths:
+      - "~/Library/Caches/{gopls,golangci-lint}"
+
+  - id: go-toolchains-old
+    name:
+      en: Old Go toolchains
+      pt-BR: Go toolchains antigos
+      es: Toolchains de Go antiguos
+    description:
+      en: "Toolchains downloaded by GOTOOLCHAIN and golang.org/dl. Keeps the newest."
+      pt-BR: "Toolchains baixados por GOTOOLCHAIN e golang.org/dl. Mantém o mais recente."
+      es: "Toolchains descargados por GOTOOLCHAIN y golang.org/dl. Conserva el más reciente."
+    risk: redownload
+    suggest_above: 300MB
+    paths:
+      - glob: "${GOPATH:-~/go}/pkg/mod/golang.org/toolchain@*"
+        keep_newest: 1
+        sort_by: version
+        version_pattern: 'go(\d+(?:\.\d+)+)'
+      - glob: ~/sdk/go1*
+        keep_newest: 1
+        sort_by: version
+
+  - id: go-modcache
+    name: Go module cache
+    description:
+      en: "go clean -modcache. Every dependency is downloaded again."
+      pt-BR: "go clean -modcache. Todas as dependências são baixadas de novo."
+      es: "go clean -modcache. Todas las dependencias se descargan de nuevo."
+    risk: redownload
+    auto_suggest: false
+    paths:
+      - "${GOPATH:-~/go}/pkg/mod"
+    run:
+      - ["go", "clean", "-modcache"]
+    then_delete: true

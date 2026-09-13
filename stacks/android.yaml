@@ -1,0 +1,196 @@
+# Android and Gradle. Schema reference: CONTRIBUTING.md
+stack:
+  id: android
+  name: Android / Gradle
+  icon: candybarphone
+  order: 30
+
+# Keys starting with x- are ignored by DevSweep; handy for YAML anchors.
+x-gradle-daemons: &gradle_daemons [GradleDaemon, KotlinCompileDaemon, kotlin-daemon]
+
+processes:
+  - id: gradle
+    name: Gradle daemon
+    description:
+      en: "Gradle daemon. A new one starts on the next build."
+      pt-BR: "Daemon do Gradle. Um novo sobe no próximo build."
+      es: "Daemon de Gradle. Se inicia otro en el próximo build."
+    match:
+      command_contains: [org.gradle.launcher.daemon, GradleDaemon]
+    limbo: { when: idle, minutes: 20, max_cpu: 1 }
+
+  - id: kotlin
+    name: Kotlin compile daemon
+    description:
+      en: "Kotlin compiler daemon."
+      pt-BR: "Daemon do compilador Kotlin."
+      es: "Daemon del compilador de Kotlin."
+    match:
+      command_contains: [KotlinCompileDaemon, kotlin-daemon]
+    limbo: { when: idle, minutes: 20, max_cpu: 1 }
+
+  - id: android-emulator
+    name:
+      en: Android emulator
+      pt-BR: Emulador Android
+      es: Emulador de Android
+    description:
+      en: "Running emulator (qemu)."
+      pt-BR: "Emulador (qemu) rodando."
+      es: "Emulador (qemu) en ejecución."
+    match:
+      exe_name_prefix: qemu-system
+    limbo: never
+    suggest_when_memory_tight: true
+
+  - id: adb
+    name: adb server
+    description:
+      en: "Bridge to Android devices."
+      pt-BR: "Ponte com aparelhos Android."
+      es: "Puente con dispositivos Android."
+    match:
+      exe_name: adb
+    limbo: never
+
+storage:
+  - id: gradle-build-cache
+    name: Gradle build cache
+    description:
+      en: "Reusable task outputs. Recreated by the next builds."
+      pt-BR: "Saídas de tasks reaproveitáveis. Recriadas nos próximos builds."
+      es: "Salidas de tareas reutilizables. Se regeneran en los próximos builds."
+    risk: safe
+    stop_processes: *gradle_daemons
+    paths:
+      - ~/.gradle/caches/build-cache-1
+      - ~/.gradle/caches/transforms-*
+
+  - id: gradle-old
+    name:
+      en: "Gradle: old versions"
+      pt-BR: "Gradle: versões antigas"
+      es: "Gradle: versiones antiguas"
+    description:
+      en: "Caches and wrappers of versions older than the newest one. Downloaded again if a project still uses them."
+      pt-BR: "Caches e wrappers de versões anteriores à mais recente. Baixados de novo se algum projeto ainda usar."
+      es: "Cachés y wrappers de versiones anteriores a la más reciente. Se descargan de nuevo si algún proyecto aún las usa."
+    risk: redownload
+    suggest_above: 1GB
+    stop_processes: *gradle_daemons
+    paths:
+      - glob: ~/.gradle/caches/*
+        name_matches: '^\d+(\.\d+)+$'
+        keep_newest: 1
+        sort_by: version
+      - glob: ~/.gradle/wrapper/dists/gradle-*
+        keep_newest: 1
+        sort_by: version
+
+  - id: gradle-current
+    name:
+      en: "Gradle: cache of the current version"
+      pt-BR: "Gradle: cache da versão atual"
+      es: "Gradle: caché de la versión actual"
+    description:
+      en: "Transforms, compiled DSL and metadata of the version in use. Recreated on the next build."
+      pt-BR: "Transforms, DSL compilado e metadados da versão em uso. Recriado no próximo build."
+      es: "Transforms, DSL compilado y metadatos de la versión en uso. Se regenera en el próximo build."
+    risk: safe
+    auto_suggest: false
+    stop_processes: *gradle_daemons
+    paths:
+      - glob: ~/.gradle/caches/*
+        name_matches: '^\d+(\.\d+)+$'
+        only_newest: 1
+        sort_by: version
+
+  - id: gradle-modules
+    name:
+      en: "Gradle: downloaded dependencies"
+      pt-BR: "Gradle: dependências baixadas"
+      es: "Gradle: dependencias descargadas"
+    description:
+      en: "~/.gradle/caches/modules-2. The next build downloads everything again."
+      pt-BR: "~/.gradle/caches/modules-2. O próximo build baixa tudo de novo."
+      es: "~/.gradle/caches/modules-2. El próximo build descarga todo de nuevo."
+    risk: redownload
+    auto_suggest: false
+    stop_processes: *gradle_daemons
+    paths:
+      - ~/.gradle/caches/modules-2
+
+  - id: gradle-daemon-logs
+    name:
+      en: Gradle daemon logs
+      pt-BR: Logs dos daemons do Gradle
+      es: Logs de los daemons de Gradle
+    description:
+      en: "~/.gradle/daemon: logs and registry of old daemons."
+      pt-BR: "~/.gradle/daemon: logs e registro de daemons antigos."
+      es: "~/.gradle/daemon: logs y registro de daemons antiguos."
+    risk: safe
+    suggest_above: 300MB
+    stop_processes: *gradle_daemons
+    paths:
+      - ~/.gradle/daemon/*
+
+  - id: android-cache
+    name:
+      en: Android SDK cache
+      pt-BR: Cache do Android SDK
+      es: Caché del Android SDK
+    description:
+      en: "~/.android/cache and build-cache."
+      pt-BR: "~/.android/cache e build-cache."
+      es: "~/.android/cache y build-cache."
+    risk: safe
+    suggest_above: 300MB
+    paths:
+      - ~/.android/cache/*
+      - ~/.android/build-cache
+
+  - id: avd-snapshots
+    name:
+      en: Emulator snapshots
+      pt-BR: Snapshots dos emuladores
+      es: Snapshots de los emuladores
+    description:
+      en: "Quick Boot saved states. The next emulator boot is a cold boot."
+      pt-BR: "Estados salvos do Quick Boot. O próximo boot do emulador é a frio."
+      es: "Estados guardados de Quick Boot. El próximo arranque del emulador es en frío."
+    risk: safe
+    suggest_above: 1GB
+    stop_processes: [qemu-system]
+    paths:
+      - ~/.android/avd/*.avd/snapshots/*
+
+  - id: avd-data
+    name:
+      en: Emulator data (wipe)
+      pt-BR: Dados dos emuladores (wipe)
+      es: Datos de los emuladores (wipe)
+    description:
+      en: "Same as Wipe Data on every AVD: installed apps and data are gone."
+      pt-BR: "Equivale a Wipe Data em todos os AVDs: apps e dados instalados somem."
+      es: "Equivale a Wipe Data en todos los AVD: se pierden las apps y los datos instalados."
+    risk: data_loss
+    auto_suggest: false
+    stop_processes: [qemu-system]
+    paths:
+      - ~/.android/avd/*.avd/userdata-qemu.img*
+      - ~/.android/avd/*.avd/cache.img*
+      - ~/.android/avd/*.avd/*.img.qcow2
+
+  - id: android-sysimg-unused
+    name:
+      en: System images without an emulator
+      pt-BR: System images sem emulador
+      es: System images sin emulador
+    description:
+      en: "System images no AVD uses. Reinstallable from the SDK Manager."
+      pt-BR: "Imagens de sistema que nenhum AVD usa. Reinstaláveis pelo SDK Manager."
+      es: "Imágenes de sistema que ningún AVD usa. Reinstalables desde el SDK Manager."
+    risk: redownload
+    suggest_above: 1GB
+    provider: android-unused-system-images

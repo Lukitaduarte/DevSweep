@@ -1,0 +1,72 @@
+# Cross-stack items. Schema reference: CONTRIBUTING.md
+stack:
+  id: general
+  name:
+    en: General
+    pt-BR: Geral
+    es: General
+  icon: shippingbox
+  order: 1000
+
+processes:
+  - id: local-servers
+    name:
+      en: Other local servers
+      pt-BR: Outros servidores locais
+      es: Otros servidores locales
+    description:
+      en: "Your processes listening on TCP ports."
+      pt-BR: "Processos seus escutando em portas TCP."
+      es: "Procesos tuyos escuchando en puertos TCP."
+    fallback: true
+    match:
+      has_ports: true
+      user_tool: true
+    limbo: never
+
+storage:
+  - id: installers
+    name:
+      en: Old installers (.ipa, .apk, .aab)
+      pt-BR: Instaladores antigos (.ipa, .apk, .aab)
+      es: Instaladores antiguos (.ipa, .apk, .aab)
+    description:
+      en: "{count} file(s) older than {days} days in Downloads, Desktop and Documents.{trash_note}"
+      pt-BR: "{count} arquivo(s) com mais de {days} dias em Downloads, Mesa e Documentos.{trash_note}"
+      es: "{count} archivo(s) con más de {days} días en Descargas, Escritorio y Documentos.{trash_note}"
+    risk: safe
+    suggest_above: 100MB
+    provider: old-installers
+    provider_options:
+      extensions: [ipa, apk, aab, apks, xcarchive]
+      folders: [~/Downloads, ~/Desktop, ~/Documents]
+
+  - id: homebrew
+    name:
+      en: "Homebrew: cache and old versions"
+      pt-BR: "Homebrew: cache e versões antigas"
+      es: "Homebrew: caché y versiones antiguas"
+    description: "brew cleanup --prune=all -s"
+    risk: safe
+    suggest_above: 1GB
+    paths:
+      - ~/Library/Caches/Homebrew
+    run:
+      - [brew, cleanup, "--prune=all", "-s"]
+    then_delete: true
+
+  - id: trash
+    name:
+      en: Trash
+      pt-BR: Lixeira
+      es: Papelera
+    description:
+      en: "Empties the Trash through Finder. Old installers go there."
+      pt-BR: "Esvazia a Lixeira pelo Finder. É para onde vão os instaladores."
+      es: "Vacía la Papelera con Finder. Ahí van los instaladores antiguos."
+    risk: data_loss
+    auto_suggest: false
+    paths:
+      - ~/.Trash
+    run:
+      - [osascript, "-e", 'tell application "Finder" to empty trash']

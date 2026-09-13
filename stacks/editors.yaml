@@ -1,0 +1,91 @@
+# Editors, language servers and AI tooling. Schema reference: CONTRIBUTING.md
+stack:
+  id: tooling
+  name:
+    en: Editors & tools
+    pt-BR: IDEs e ferramentas
+    es: Editores y herramientas
+  icon: hammer
+  order: 60
+
+matchers:
+  script-runtime:
+    any:
+      - exe_name: [node, bun, deno, uv, uvx, npm, npx]
+      - exe_name_prefix: python
+
+processes:
+  - id: wiz
+    name: Wiz IDE server
+    description:
+      en: "Server of the Wiz editor extension. Orphaned copies stay behind when an editor window closes."
+      pt-BR: "Servidor da extensão Wiz. Cópias órfãs sobram quando a janela do editor fecha."
+      es: "Servidor de la extensión Wiz. Quedan copias huérfanas cuando se cierra la ventana del editor."
+    match:
+      command_contains: wiz-ide-server
+
+  - id: mcp-servers
+    name:
+      en: MCP servers (npx/uvx)
+      pt-BR: Servidores MCP (npx/uvx)
+      es: Servidores MCP (npx/uvx)
+    description:
+      en: "MCP servers started by AI agents and editors."
+      pt-BR: "MCPs iniciados por agentes e editores."
+      es: "MCP iniciados por agentes y editores."
+    match:
+      ref: script-runtime
+      command_contains: [mcp-server, "-mcp", mcp_server, "@modelcontextprotocol", npm exec]
+
+  - id: java-ls
+    name:
+      en: Java/Kotlin language servers
+      pt-BR: Language servers Java/Kotlin
+      es: Language servers de Java/Kotlin
+    description: "jdtls, kotlin-language-server"
+    match:
+      command_contains: [org.eclipse.jdt.ls, jdtls, kotlin-language-server]
+
+storage:
+  - id: editor-logs
+    name:
+      en: Editor logs and downloaded VSIX
+      pt-BR: Logs e VSIX baixados dos editores
+      es: Logs y VSIX descargados de los editores
+    description:
+      en: "VS Code-based editors: logs and installers of extensions that are already installed."
+      pt-BR: "Editores baseados no VS Code: logs e instaladores de extensões já instaladas."
+      es: "Editores basados en VS Code: logs e instaladores de extensiones ya instaladas."
+    risk: safe
+    suggest_above: 500MB
+    paths:
+      - "~/Library/Application Support/{Code,Code - Insiders,Cursor,Antigravity IDE,Windsurf,VSCodium}/{logs,CachedExtensionVSIXs}"
+
+  - id: editor-caches
+    name:
+      en: Editor caches
+      pt-BR: Caches dos editores
+      es: Cachés de los editores
+    description:
+      en: "Cache, CachedData, GPUCache. Close the editor before cleaning."
+      pt-BR: "Cache, CachedData, GPUCache. Feche o editor antes de limpar."
+      es: "Cache, CachedData, GPUCache. Cierra el editor antes de limpiar."
+    risk: safe
+    auto_suggest: false
+    paths:
+      - "~/Library/Application Support/{Code,Code - Insiders,Cursor,Antigravity IDE,Windsurf,VSCodium}/{Cache,CachedData,Code Cache,GPUCache,CachedProfilesData}"
+
+  - id: jetbrains-caches
+    name:
+      en: Android Studio / JetBrains caches
+      pt-BR: Caches do Android Studio / JetBrains
+      es: Cachés de Android Studio / JetBrains
+    description:
+      en: "Indexes and caches, rebuilt when the IDE opens (the first indexing is slow)."
+      pt-BR: "Índices e caches, recriados ao abrir a IDE (a primeira indexação demora)."
+      es: "Índices y cachés, se regeneran al abrir el IDE (la primera indexación tarda)."
+    risk: safe
+    auto_suggest: false
+    paths:
+      - ~/Library/Caches/Google/AndroidStudio*
+      - ~/Library/Caches/JetBrains/*

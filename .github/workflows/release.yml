@@ -1,0 +1,56 @@
+name: Release
+
+# release-please keeps a "chore(main): release x.y.z" pull request up to date from
+# Conventional Commits. Merging it tags the version, publishes the GitHub release with
+# the changelog, and the build job attaches the app and the Sparkle appcast to it.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@v5
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  build:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: macos-15
+    permissions:
+      contents: write
+    env:
+      DEVSWEEP_VERSION: ${{ needs.release-please.outputs.version }}
+      TAG: ${{ needs.release-please.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test
+        run: swift test
+      - name: Build universal app
+        env:
+          UNIVERSAL: "1"
+        run: ./scripts/build-app.sh
+      - name: Package, sign update and write appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/package-release.sh
+      - name: Attach to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" build/release/* --clobber

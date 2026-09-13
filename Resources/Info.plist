@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>DevSweep</string>
+    <key>CFBundleDisplayName</key>
+    <string>DevSweep</string>
+    <key>CFBundleIdentifier</key>
+    <string>io.github.devsweep.DevSweep</string>
+    <key>CFBundleExecutable</key>
+    <string>DevSweep</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleAllowMixedLocalizations</key>
+    <true/>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>DevSweepRepository</key>
+    <string>Lukitaduarte/DevSweep</string>
+    <key>SUFeedURL</key>
+    <string>https://github.com/Lukitaduarte/DevSweep/releases/latest/download/appcast.xml</string>
+    <key>SUPublicEDKey</key>
+    <string></string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUAutomaticallyUpdate</key>
+    <false/>
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>DevSweep uses Finder to empty the Trash when you ask it to.</string>
+</dict>
+</plist>

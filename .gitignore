@@ -1,0 +1,18 @@
+.build/
+build/
+.swiftpm/
+*.xcodeproj
+.DS_Store
+
+# Raw screenshots can contain personal data. Redact them into docs/images/ first
+# (see .claude/skills/redact-screenshots).
+/Captura de Tela*.png
+/Screenshot*.png
+/Screen Shot*.png
+
+# Never commit the private half of the Sparkle signing key.
+*.private.key
+sparkle-private*
+
+# Personal Claude Code settings.
+.claude/settings.local.json

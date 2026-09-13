@@ -1,0 +1,251 @@
+# Node.js, Next.js and browser automation. Schema reference: CONTRIBUTING.md
+stack:
+  id: web
+  name: Node / Next.js
+  icon: globe
+  order: 40
+
+matchers:
+  js-runtime:
+    exe_name: [node, bun, deno]
+
+processes:
+  - id: chrome-devtools-mcp
+    name: Chrome DevTools MCP
+    description:
+      en: "MCP server that drives a Chrome for AI agents, along with that Chrome."
+      pt-BR: "MCP que controla um Chrome para agentes, junto com esse Chrome."
+      es: "MCP que controla un Chrome para agentes, junto con ese Chrome."
+    match:
+      command_contains: chrome-devtools-mcp
+
+  - id: chromedriver
+    name: chromedriver
+    description:
+      en: "Selenium/WebDriver driver."
+      pt-BR: "Driver do Selenium/WebDriver."
+      es: "Driver de Selenium/WebDriver."
+    match:
+      exe_name: chromedriver
+
+  - id: chrome-automation
+    name:
+      en: Debug/automation Chrome
+      pt-BR: Chrome de debug/automação
+      es: Chrome de depuración/automatización
+    description:
+      en: "Chrome opened with a debugging port (flutter run -d chrome, Puppeteer, Playwright)."
+      pt-BR: "Chrome aberto com porta de debug (flutter run -d chrome, Puppeteer, Playwright)."
+      es: "Chrome abierto con puerto de depuración (flutter run -d chrome, Puppeteer, Playwright)."
+    match:
+      any:
+        - exe_path_contains: [Google Chrome for Testing, Chromium.app, ms-playwright]
+        - exe_path_contains: Google Chrome
+          command_contains: ["--remote-debugging-port", "--remote-debugging-pipe", "--headless", "--enable-automation"]
+
+  - id: node-dev
+    name:
+      en: Node dev servers (Next, Vite…)
+      pt-BR: Dev servers Node (Next, Vite…)
+      es: Dev servers de Node (Next, Vite…)
+    description:
+      en: "next dev, vite, webpack, turbo, esbuild and friends."
+      pt-BR: "next dev, vite, webpack, turbo, esbuild e afins."
+      es: "next dev, vite, webpack, turbo, esbuild y similares."
+    match:
+      any:
+        - exe_name: esbuild
+        - command_prefix: next-server
+        - ref: js-runtime
+          command_contains:
+            - next dev
+            - next-server
+            - next/dist
+            - vite
+            - webpack
+            - nuxt
+            - astro
+            - remix
+            - turbo
+            - nodemon
+            - tsx watch
+            - ts-node
+            - expo start
+            - metro
+            - storybook
+            - react-scripts
+
+  - id: js-language
+    name: TypeScript / ESLint servers
+    description:
+      en: "tsserver and JS/CSS language servers used by the editor."
+      pt-BR: "tsserver e language servers de JS/CSS usados pelo editor."
+      es: "tsserver y language servers de JS/CSS que usa el editor."
+    match:
+      command_contains:
+        - tsserver
+        - typescript-language-server
+        - eslintServer
+        - eslint-language-server
+        - tailwindcss-language-server
+        - vscode-json-language
+        - css-language-server
+        - html-language-server
+
+storage:
+  - id: npm-cache
+    name:
+      en: npm cache
+      pt-BR: Cache do npm
+      es: Caché de npm
+    description:
+      en: "~/.npm/_cacache. Same as npm cache clean --force."
+      pt-BR: "~/.npm/_cacache. Equivale a npm cache clean --force."
+      es: "~/.npm/_cacache. Equivale a npm cache clean --force."
+    risk: redownload
+    suggest_above: 1GB
+    paths:
+      - ~/.npm/_cacache
+
+  - id: npx-cache
+    name:
+      en: npx packages
+      pt-BR: Pacotes do npx
+      es: Paquetes de npx
+    description:
+      en: "~/.npm/_npx: tools downloaded by npx (MCP servers, CLIs)."
+      pt-BR: "~/.npm/_npx: ferramentas baixadas por npx (MCPs, CLIs)."
+      es: "~/.npm/_npx: herramientas descargadas por npx (MCP, CLIs)."
+    risk: redownload
+    suggest_above: 500MB
+    paths:
+      - ~/.npm/_npx
+
+  - id: yarn-cache
+    name:
+      en: Yarn cache
+      pt-BR: Cache do Yarn
+      es: Caché de Yarn
+    description:
+      en: "Packages downloaded by Yarn."
+      pt-BR: "Pacotes baixados pelo Yarn."
+      es: "Paquetes descargados por Yarn."
+    risk: redownload
+    paths:
+      - ~/Library/Caches/Yarn
+
+  - id: bun-cache
+    name:
+      en: Bun cache
+      pt-BR: Cache do Bun
+      es: Caché de Bun
+    description: "~/.bun/install/cache"
+    risk: redownload
+    paths:
+      - ~/.bun/install/cache
+
+  - id: pnpm-store
+    name: pnpm store (prune)
+    description:
+      en: "Removes only unreferenced packages. The size shown is the whole store."
+      pt-BR: "Remove só pacotes não referenciados. O tamanho mostrado é o store inteiro."
+      es: "Elimina solo paquetes no referenciados. El tamaño mostrado es el store completo."
+    risk: safe
+    auto_suggest: false
+    paths:
+      - ~/Library/pnpm/store
+    run:
+      - [pnpm, store, prune]
+
+  - id: node-misc-cache
+    name:
+      en: nvm and node-gyp caches
+      pt-BR: Caches do nvm e node-gyp
+      es: Cachés de nvm y node-gyp
+    description:
+      en: "nvm downloads and node-gyp headers."
+      pt-BR: "Downloads do nvm e headers do node-gyp."
+      es: "Descargas de nvm y headers de node-gyp."
+    risk: redownload
+    suggest_above: 500MB
+    paths:
+      - ~/.nvm/.cache
+      - ~/Library/Caches/node-gyp
+
+  - id: automation-browsers
+    name:
+      en: Automation browsers
+      pt-BR: Browsers de automação
+      es: Navegadores de automatización
+    description:
+      en: "Chromium/Chrome downloaded by Playwright, Puppeteer, Selenium and chrome-devtools-mcp."
+      pt-BR: "Chromium/Chrome baixados por Playwright, Puppeteer, Selenium e chrome-devtools-mcp."
+      es: "Chromium/Chrome descargados por Playwright, Puppeteer, Selenium y chrome-devtools-mcp."
+    risk: redownload
+    suggest_above: 1GB
+    stop_processes: [chromedriver, chrome-devtools-mcp, ms-playwright]
+    paths:
+      - ~/Library/Caches/ms-playwright/*
+      - "~/.cache/{puppeteer,selenium,chrome-devtools-mcp}"
+
+  - id: nvm-old
+    name:
+      en: "Node (nvm): unused versions"
+      pt-BR: "Node (nvm): versões não usadas"
+      es: "Node (nvm): versiones sin uso"
+    description:
+      en: "nvm installs besides the default and the newest. Their global packages go too."
+      pt-BR: "Versões do nvm além da padrão e da mais recente. Os pacotes globais delas somem junto."
+      es: "Versiones de nvm además de la predeterminada y la más reciente. Sus paquetes globales también se van."
+    risk: redownload
+    auto_suggest: false
+    provider: nvm-non-default-versions
+
+  - id: node-modules-inactive
+    name:
+      en: node_modules of inactive projects
+      pt-BR: node_modules de projetos inativos
+      es: node_modules de proyectos inactivos
+    description:
+      en: "{project_count} project(s) idle for {inactive_days}+ days: {projects}. Restored by npm/pnpm install."
+      pt-BR: "{project_count} projeto(s) parados há {inactive_days}+ dias: {projects}. Volta com npm/pnpm install."
+      es: "{project_count} proyecto(s) sin actividad hace {inactive_days}+ días: {projects}. Vuelve con npm/pnpm install."
+    risk: redownload
+    suggest_above: 1GB
+    project:
+      markers: [package.json]
+      activity: inactive
+      activity_files: [package-lock.json, pnpm-lock.yaml, yarn.lock, bun.lockb, src, app]
+      paths: [node_modules]
+
+  - id: web-build-inactive
+    name:
+      en: Build caches of inactive projects
+      pt-BR: Caches de build de projetos inativos
+      es: Cachés de build de proyectos inactivos
+    description:
+      en: ".next, .turbo and similar folders of idle projects."
+      pt-BR: ".next, .turbo e similares de projetos parados."
+      es: ".next, .turbo y similares de proyectos sin actividad."
+    risk: safe
+    suggest_above: 500MB
+    project:
+      markers: [package.json]
+      activity: inactive
+      paths: [.next, .turbo, .nuxt, .svelte-kit, .expo, .parcel-cache]
+
+  - id: web-build-active
+    name:
+      en: Build caches of active projects
+      pt-BR: Caches de build de projetos ativos
+      es: Cachés de build de proyectos activos
+    description:
+      en: ".next, .turbo and node_modules/.cache. Stop the dev server first."
+      pt-BR: ".next, .turbo e node_modules/.cache. Pare o dev server antes."
+      es: ".next, .turbo y node_modules/.cache. Detén el dev server antes."
+    risk: safe
+    auto_suggest: false
+    project:
+      markers: [package.json]
+      activity: active
+      paths: [.next, .turbo, .nuxt, .svelte-kit, .expo, .parcel-cache, node_modules/.cache]

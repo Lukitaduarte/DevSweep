@@ -1,0 +1,148 @@
+# Flutter and Dart. Schema reference: CONTRIBUTING.md
+stack:
+  id: flutter
+  name: Flutter / Dart
+  icon: bird
+  order: 20
+
+matchers:
+  dart:
+    any:
+      - exe_name: [dart, dartaotruntime, dartvm]
+      - exe_name_prefix: "dart:"
+      - command_prefix: "dart:"
+      - command_contains: /dart-sdk/bin/
+
+processes:
+  - id: dart-analyzer
+    name: Dart analysis server (lint)
+    description:
+      en: "Analyzer used by the editor. The editor starts a new one when it needs it."
+      pt-BR: "Analyzer usado pelo editor. O editor sobe outro quando precisa."
+      es: "Analyzer que usa el editor. El editor inicia otro cuando lo necesita."
+    match:
+      ref: dart
+      command_contains: [language-server, analysis_server, analysis-server]
+
+  - id: dart-mcp
+    name: Dart MCP server
+    description:
+      en: "Dart MCP server started by an AI agent or editor."
+      pt-BR: "Servidor MCP do Dart iniciado por um agente ou editor."
+      es: "Servidor MCP de Dart iniciado por un agente o editor."
+    match:
+      ref: dart
+      command_contains: mcp-server
+
+  - id: dart-dtd
+    name: Dart Tooling Daemon / DevTools
+    description:
+      en: "Daemon that connects DevTools and the editor to the running app."
+      pt-BR: "Daemon que conecta DevTools e editor ao app em execução."
+      es: "Daemon que conecta DevTools y el editor con la app en ejecución."
+    match:
+      ref: dart
+      command_contains: [tooling-daemon, tooling_daemon, devtools]
+
+  - id: flutter-tools
+    name: flutter run / daemon
+    description:
+      en: "Flutter tool that runs the app and hot reload."
+      pt-BR: "Ferramenta do Flutter que roda o app e o hot reload."
+      es: "Herramienta de Flutter que ejecuta la app y el hot reload."
+    match:
+      command_contains: [flutter_tools.snapshot, flutter_tools/bin]
+
+  - id: dart-other
+    name:
+      en: Other Dart processes
+      pt-BR: Outros processos Dart
+      es: Otros procesos de Dart
+    description:
+      en: "frontend_server, pub, build_runner and Dart scripts."
+      pt-BR: "frontend_server, pub, build_runner e scripts Dart."
+      es: "frontend_server, pub, build_runner y scripts de Dart."
+    fallback: true
+    match:
+      ref: dart
+
+storage:
+  - id: pub-cache
+    name: Pub cache
+    description:
+      en: "Packages from flutter/dart pub get. They come back on the next pub get."
+      pt-BR: "Pacotes de flutter/dart pub get. Voltam no próximo pub get."
+      es: "Paquetes de flutter/dart pub get. Vuelven en el próximo pub get."
+    risk: redownload
+    suggest_above: 4GB
+    paths:
+      - ~/.pub-cache/hosted
+      - ~/.pub-cache/git
+      - ~/.pub-cache/_temp
+
+  - id: dart-server
+    name:
+      en: Dart Analysis Server cache
+      pt-BR: Cache do Dart Analysis Server
+      es: Caché del Dart Analysis Server
+    description:
+      en: "~/.dartServer: analyzer indexes, rebuilt when the editor opens the project."
+      pt-BR: "~/.dartServer: índices do analyzer, recriados quando o editor abre o projeto."
+      es: "~/.dartServer: índices del analyzer, se regeneran cuando el editor abre el proyecto."
+    risk: safe
+    suggest_above: 1GB
+    paths:
+      - ~/.dartServer/.analysis-driver
+      - ~/.dartServer/.instrumentation
+      - ~/.dartServer/.plugin_manager
+
+  - id: fvm-version
+    name: "Flutter {version} (FVM)"
+    description: "{usage}"
+    risk: redownload
+    suggest_above: 500MB
+    provider: fvm-versions
+
+  - id: fvm-cache-git
+    name: FVM cache.git
+    description:
+      en: "Clone of the Flutter repository used to install versions."
+      pt-BR: "Clone do repositório do Flutter usado para instalar versões."
+      es: "Clon del repositorio de Flutter usado para instalar versiones."
+    risk: redownload
+    auto_suggest: false
+    paths:
+      - "~/{fvm,.fvm}/cache.git"
+
+  - id: flutter-inactive
+    name:
+      en: Builds of inactive Flutter projects
+      pt-BR: Builds de projetos Flutter inativos
+      es: Builds de proyectos Flutter inactivos
+    description:
+      en: "build/, .dart_tool and Pods of {project_count} project(s) idle for {inactive_days}+ days: {projects}."
+      pt-BR: "build/, .dart_tool e Pods de {project_count} projeto(s) parados há {inactive_days}+ dias: {projects}."
+      es: "build/, .dart_tool y Pods de {project_count} proyecto(s) sin actividad hace {inactive_days}+ días: {projects}."
+    risk: redownload
+    suggest_above: 1GB
+    project:
+      markers: [pubspec.yaml]
+      activity: inactive
+      activity_files: [pubspec.lock, lib, .dart_tool/package_config.json]
+      paths: [build, .dart_tool, ios/Pods, macos/Pods, android/.gradle, ios/.symlinks]
+
+  - id: flutter-active-build
+    name:
+      en: build/ of active Flutter projects
+      pt-BR: build/ de projetos Flutter ativos
+      es: build/ de proyectos Flutter activos
+    description:
+      en: "Same as flutter clean in {projects}. The next build is a full one."
+      pt-BR: "Equivale a flutter clean em {projects}. O próximo build é completo."
+      es: "Equivale a flutter clean en {projects}. El próximo build es completo."
+    risk: safe
+    auto_suggest: false
+    project:
+      markers: [pubspec.yaml]
+      activity: active
+      paths: [build]

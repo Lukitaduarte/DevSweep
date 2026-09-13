@@ -12,7 +12,9 @@ jobs:
   test:
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Show toolchain
         run: swift --version
       - name: Test with coverage (includes stack, locale and privacy validation)
@@ -27,7 +29,7 @@ jobs:
             -ignore-filename-regex='(\.build|Tests)/|Sources/DevSweep/UI/|App/(AppModel|DevSweepApp|Updater)\.swift|Advisor/Notifier\.swift' \
             -format=lcov > coverage.lcov
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           files: coverage.lcov
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -38,10 +40,11 @@ jobs:
   secret-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: Scan for leaked secrets
-        uses: trufflesecurity/trufflehog@v3.97.4
+        uses: trufflesecurity/trufflehog@363923b901c911a9164f50b6c423f47c15372b1c # v3.97.4
         with:
           extra_args: --results=verified,unknown

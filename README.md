@@ -33,6 +33,20 @@ Available in English, Português (Brasil) and Español.
 1. Download `DevSweep-x.y.z.zip` from the [latest release](https://github.com/Lukitaduarte/DevSweep/releases/latest), unzip it and move **DevSweep.app** to `/Applications`.
 2. Open it. Releases aren't notarized by Apple yet, so the first time macOS blocks it: right-click the app → **Open** → **Open** (on macOS 15+, **System Settings → Privacy & Security → Open Anyway**). You only do this once; updates install normally.
 
+### Verifying a download
+
+Every release asset is signed with [Sigstore](https://sigstore.dev) by the release workflow, and ships with an SBOM. To check a download before opening it:
+
+```bash
+cosign verify-blob DevSweep-x.y.z.zip \
+  --signature DevSweep-x.y.z.zip.sig \
+  --certificate DevSweep-x.y.z.zip.pem \
+  --certificate-identity-regexp '^https://github.com/Lukitaduarte/DevSweep/\.github/workflows/release\.yml@refs/tags/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+The signature proves the file came out of this repository's release workflow, not from someone re-uploading a zip.
+
 ### Build from source
 
 Requires macOS 14+ and Xcode 16+ (or a Swift 6 toolchain).

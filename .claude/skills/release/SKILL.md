@@ -13,7 +13,10 @@ description: Cut a DevSweep release or fix the release pipeline, including the o
    - runs the tests;
    - builds a universal app with `UNIVERSAL=1 scripts/build-app.sh`, with the version injected from release-please;
    - runs `scripts/package-release.sh` to zip the app, write its SHA-256, sign the zip with Sparkle's `sign_update` and write `appcast.xml` with the release notes;
+   - generates an SPDX SBOM and signs the zip and the SBOM with Sigstore (keyless, using the workflow's OIDC identity, so there is no key to leak);
    - uploads everything to the release.
+
+To rebuild the assets of a tag that already exists (a release whose build failed, for example), run the workflow by hand: `gh workflow run release.yml -f tag=v0.1.0`. It checks out that tag, rebuilds and re-uploads with `--clobber`.
 4. Installed apps read `https://github.com/<repo>/releases/latest/download/appcast.xml` once a day (`SUFeedURL` in `Resources/Info.plist`). They show an "update available" card with a Changelog link, and install with one click after Sparkle verifies the EdDSA signature.
 
 To release: review and merge the release PR. Nothing else is manual.

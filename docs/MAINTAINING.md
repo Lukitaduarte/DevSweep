@@ -40,6 +40,14 @@ the app again by hand. It's in the login keychain as *Private key for signing Sp
   live in `.coderabbit.yaml`.
 - **OpenSSF Scorecard.** Nothing to configure; the badge appears after the first run on `main`.
 
+## Notarization
+
+Releases are ad-hoc signed, not notarized, so macOS blocks the first launch of anything it
+quarantined (Homebrew casks and manual downloads; `npx` installs are not quarantined). Removing
+that for everyone needs a paid Apple Developer account: with one, add `codesign --options runtime`
+using the Developer ID and `xcrun notarytool submit --wait` to `scripts/package-release.sh`, and
+store the credentials as repository secrets.
+
 ## Homebrew
 
 Nothing to set up. `Casks/devsweep.rb` lives in this repository and this repository is the tap:

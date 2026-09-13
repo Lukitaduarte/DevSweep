@@ -47,7 +47,17 @@ Homebrew 7 refuses to load casks from a tap you haven't trusted, which is why th
 
 Both paths download the release from GitHub, check it against the published SHA-256 and put **DevSweep.app** in `/Applications`.
 
-Prefer to do it by hand? Download `DevSweep-x.y.z.zip` from the [latest release](https://github.com/Lukitaduarte/DevSweep/releases/latest), unzip it and move the app to `/Applications`. In that case macOS blocks the first launch, because releases aren't notarized by Apple yet: right-click the app → **Open** → **Open** (on macOS 15+, **System Settings → Privacy & Security → Open Anyway**). You only do this once, and updates install normally. The two commands above avoid that prompt, since files downloaded by a script aren't quarantined.
+Prefer to do it by hand? Download `DevSweep-x.y.z.zip` from the [latest release](https://github.com/Lukitaduarte/DevSweep/releases/latest), unzip it and move the app to `/Applications`.
+
+### The first launch
+
+DevSweep is **not notarized by Apple**, because notarizing requires a paid Apple Developer account. macOS therefore blocks the first launch of anything it downloaded and quarantined, with *"Apple could not verify DevSweep.app is free of malware"*.
+
+- **Homebrew** quarantines what it installs, so you will see it. Allow it once in **System Settings → Privacy & Security → Open Anyway**, or install with `brew install --cask --no-quarantine devsweep` if you'd rather opt out of the check knowingly.
+- **A manual download** behaves the same way: allow it once in System Settings.
+- **`npx @lukitaduarte/devsweep`** doesn't quarantine, so the app opens directly.
+
+Updates install normally afterwards either way. If you want to know what you're allowing before you allow it, the [verification commands](#verifying-a-download) prove the download came from this repository's release workflow — which is a stronger guarantee than notarization gives you, since it ties the file to a public build log.
 
 ### Verifying a download
 

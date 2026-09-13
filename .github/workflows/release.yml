@@ -115,6 +115,14 @@ jobs:
       - name: Publish the installer to npm
         run: |
           cd packaging/npm
-          npm version "${TAG#v}" --no-git-tag-version
-          npm publish --access public
+          VERSION="${TAG#v}"
+          npm version "$VERSION" --no-git-tag-version
+          NAME="$(node -p 'require("./package.json").name')"
+          # Rebuilding the assets of an existing tag reaches this step again, and npm
+          # refuses to publish a name@version twice.
+          if npm view "${NAME}@${VERSION}" version >/dev/null 2>&1; then
+            echo "::notice::${NAME}@${VERSION} is already on npm."
+          else
+            npm publish --access public
+          fi
 

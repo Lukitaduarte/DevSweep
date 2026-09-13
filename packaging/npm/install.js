@@ -75,16 +75,18 @@ async function main() {
   console.log(`Downloading DevSweep ${release.tag_name}…`);
   const archive = await download(asset.browser_download_url);
 
-  if (checksumAsset) {
-    const expected = (await download(checksumAsset.browser_download_url)).toString().trim().split(/\s+/)[0];
-    const actual = createHash("sha256").update(archive).digest("hex");
-    if (expected !== actual) {
-      throw new Error(`checksum mismatch: expected ${expected}, got ${actual}`);
-    }
-    console.log("Checksum verified.");
-  } else {
-    console.warn("Warning: this release has no .sha256 file, skipping the checksum check.");
+  if (!checksumAsset) {
+    throw new Error(
+      `release ${release.tag_name} has no ${asset.name}.sha256 file, so the download can't be verified. ` +
+        "Install another version, or download it from the releases page if you know what you're doing."
+    );
   }
+  const expected = (await download(checksumAsset.browser_download_url)).toString().trim().split(/\s+/)[0];
+  const actual = createHash("sha256").update(archive).digest("hex");
+  if (expected !== actual) {
+    throw new Error(`checksum mismatch: expected ${expected}, got ${actual}`);
+  }
+  console.log("Checksum verified.");
 
   const workingDirectory = await mkdtemp(join(tmpdir(), "devsweep-"));
   try {

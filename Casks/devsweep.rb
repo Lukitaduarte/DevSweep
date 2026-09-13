@@ -16,7 +16,7 @@ cask "devsweep" do
   homepage "https://github.com/Lukitaduarte/DevSweep"
 
   auto_updates true
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "DevSweep.app"
 

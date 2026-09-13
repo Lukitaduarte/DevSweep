@@ -1,0 +1,26 @@
+# Coverage targets. Keep `ignore` in sync with the -ignore-filename-regex in .github/workflows/ci.yml.
+coverage:
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 1%
+    patch:
+      default:
+        target: 80%
+        threshold: 5%
+
+# SwiftUI views and the glue around system services (menu bar app lifecycle, Sparkle,
+# UserNotifications) can't be exercised without a UI test host, so they don't count.
+ignore:
+  - "Sources/DevSweep/UI/**"
+  - "Sources/DevSweep/App/AppModel.swift"
+  - "Sources/DevSweep/App/DevSweepApp.swift"
+  - "Sources/DevSweep/App/Updater.swift"
+  - "Sources/DevSweep/Advisor/Notifier.swift"
+  - "Tests/**"
+  - "scripts/**"
+
+comment:
+  layout: "condensed_header, diff, files"
+  require_changes: false

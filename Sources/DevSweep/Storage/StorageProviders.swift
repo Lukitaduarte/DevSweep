@@ -32,7 +32,7 @@ enum StorageProviders {
         case "fvm-versions": fvmVersions(context)
         case "xcode-unavailable-simulators": [ProviderResult(paths: unavailableSimulators())]
         case "android-unused-system-images": [ProviderResult(paths: unusedAndroidSystemImages(context))]
-        case "nvm-non-default-versions": [ProviderResult(paths: nvmNonDefaultVersions())]
+        case "nvm-non-default-versions": [ProviderResult(paths: nvmNonDefaultVersions(context))]
         case "old-installers": [oldInstallers(context)]
         default: []
         }
@@ -118,11 +118,13 @@ enum StorageProviders {
 
     // MARK: Node
 
-    /// nvm installs other than the default alias and the newest one.
-    private static func nvmNonDefaultVersions() -> [URL] {
-        let versions = PathGlob.expand(expandTilde("~/.nvm/versions/node/*"))
+    /// nvm installs other than the default alias and the newest one. Option `root` overrides ~/.nvm.
+    private static func nvmNonDefaultVersions(_ context: ProviderContext) -> [URL] {
+        let template = context.options["root"]?.first ?? "~/.nvm"
+        guard let root = PathTemplate.expand(template).first else { return [] }
+        let versions = PathGlob.expand(root + "/versions/node/*")
             .sorted { $0.lastPathComponent.compare($1.lastPathComponent, options: .numeric) == .orderedAscending }
-        let alias = (try? String(contentsOfFile: expandTilde("~/.nvm/alias/default"), encoding: .utf8))?
+        let alias = (try? String(contentsOfFile: root + "/alias/default", encoding: .utf8))?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let keep = Set(versions.filter { url in
             let name = url.lastPathComponent

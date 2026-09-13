@@ -176,7 +176,7 @@ Providers are the Swift escape hatch for things globs can't express, like readin
 | `fvm-versions` | none | `version`, `usage`. One entry per installed version. |
 | `xcode-unavailable-simulators` | none | none |
 | `android-unused-system-images` | `sdk` | none |
-| `nvm-non-default-versions` | none | none |
+| `nvm-non-default-versions` | `root` | none |
 | `old-installers` | `extensions`, `folders` | `count`, `days`, `trash_note` |
 
 To add one, implement it there, add its name to `StorageProviders.names`, and cover it with a test.

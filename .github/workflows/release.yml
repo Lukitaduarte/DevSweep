@@ -2,12 +2,14 @@ name: Release
 
 # release-please keeps a "chore(main): release x.y.z" pull request up to date from
 # Conventional Commits. Merging it tags the version, publishes the GitHub release with
-# the changelog, and the build job attaches the app and the Sparkle appcast to it.
+# the changelog, and the build job attaches the app, the Sparkle appcast, an SBOM and
+# Sigstore signatures to it.
+#
+# The workflow can also be run by hand to (re)build the assets of an existing tag.
 
 on:
   push:
     branches: [main]
-  # Rebuild and re-upload the assets of a release that already exists.
   workflow_dispatch:
     inputs:
       tag:
@@ -19,6 +21,7 @@ permissions:
 
 jobs:
   release-please:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -26,37 +29,59 @@ jobs:
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
-      version: ${{ steps.release.outputs.version }}
     steps:
       - id: release
-        uses: googleapis/release-please-action@v5
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
   build:
-    needs: release-please
-    if: needs.release-please.outputs.release_created == 'true'
+    needs: [release-please]
+    if: ${{ always() && (needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch') }}
     runs-on: macos-15
     permissions:
       contents: write
+      id-token: write # Sigstore keyless signing
     env:
-      DEVSWEEP_VERSION: ${{ needs.release-please.outputs.version }}
-      TAG: ${{ needs.release-please.outputs.tag_name }}
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || needs.release-please.outputs.tag_name }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || '' }}
+          persist-credentials: false
+      - name: Resolve the version from the tag
+        run: echo "DEVSWEEP_VERSION=${TAG#v}" >> "$GITHUB_ENV"
       - name: Test
         run: swift test
       - name: Build universal app
         env:
           UNIVERSAL: "1"
         run: ./scripts/build-app.sh
-      - name: Package, sign update and write appcast
+      - name: Package, sign the update and write the appcast
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: ./scripts/package-release.sh
-      - name: Attach to the GitHub release
+      - name: Generate an SBOM
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          path: .
+          format: spdx-json
+          output-file: build/release/DevSweep-${{ env.DEVSWEEP_VERSION }}.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      - name: Sign the release files with Sigstore
+        run: |
+          for file in build/release/*.zip build/release/*.spdx.json; do
+            cosign sign-blob --yes \
+              --output-signature "$file.sig" \
+              --output-certificate "$file.pem" \
+              "$file"
+          done
+      - name: Attach everything to the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$TAG" build/release/* --clobber

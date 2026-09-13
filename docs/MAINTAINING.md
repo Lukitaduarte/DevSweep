@@ -40,14 +40,32 @@ the app again by hand. It's in the login keychain as *Private key for signing Sp
   live in `.coderabbit.yaml`.
 - **OpenSSF Scorecard.** Nothing to configure; the badge appears after the first run on `main`.
 
+## Notarization
+
+Releases are ad-hoc signed, not notarized, so macOS blocks the first launch of anything it
+quarantined (Homebrew casks and manual downloads; `npx` installs are not quarantined). Removing
+that for everyone needs a paid Apple Developer account: with one, add `codesign --options runtime`
+using the Developer ID and `xcrun notarytool submit --wait` to `scripts/package-release.sh`, and
+store the credentials as repository secrets.
+
 ## Homebrew
 
 Nothing to set up. `Casks/devsweep.rb` lives in this repository and this repository is the tap:
 
 ```bash
+brew trust --tap https://github.com/<owner>/DevSweep
 brew tap <owner>/devsweep https://github.com/<owner>/DevSweep
 brew install --cask devsweep
 ```
+
+The trust command must name the URL: because this repository isn't called `homebrew-devsweep`,
+the tap counts as having a custom remote, and `Tap#matches_reference?` only matches those by URL.
+Trusting `<owner>/devsweep` is accepted silently and then never matches — which looks exactly
+like the trust command not working.
+
+Homebrew 7 refuses to load casks from an untrusted third-party tap, so the trust command is part
+of the flow for everyone — it is not something the maintainer can configure away. Getting the
+cask into the official `homebrew/cask` repository is what would remove it.
 
 The two-argument form of `brew tap` is what allows a repository that isn't named
 `homebrew-something`. The cask uses `version :latest` with `sha256 :no_check` against the stable

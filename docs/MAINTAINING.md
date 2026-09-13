@@ -61,28 +61,54 @@ with no tap at all.
 
 ## npm installer (optional)
 
-Publishing the `npx devsweep` installer needs an npm account with 2FA and an **automation**
-token — the only kind that works in CI with 2FA enabled. Create one at
-<https://www.npmjs.com/settings/~/tokens> (*Generate New Token* → *Classic* → *Automation*):
+The `npx devsweep` installer is published with **trusted publishing**: npm trusts this
+repository's release workflow directly through OIDC, so no token is ever stored. npm warns
+against automation tokens for CI for good reason — a leaked one can publish anything, forever.
+
+Trusted publishing can only be attached to a package that already exists, so the first version
+goes up by hand, from a terminal, with no token at all:
 
 ```bash
-gh secret set NPM_TOKEN --repo <owner>/DevSweep
+npm view devsweep                       # a 404 means the name is still free
+npm login                               # asks for your 2FA code
+cd packaging/npm
+npm version <version> --no-git-tag-version
+npm publish --access public             # asks for the 2FA code again
 ```
 
-Check the name is free with `npm view devsweep` (a 404 means free). If it's taken, rename the
-package in `packaging/npm/package.json` to `@<user>/devsweep`; people then run
-`npx @<user>/devsweep`.
+Then, on <https://www.npmjs.com/package/devsweep/access>, add a trusted publisher:
 
-## When a token expires
+| Field | Value |
+|---|---|
+| Publisher | GitHub Actions |
+| Organization / user | `<owner>` |
+| Repository | `DevSweep` |
+| Workflow filename | `release.yml` |
+| Environment | leave empty |
 
-npm tokens can expire. The release keeps working when that happens — the npm job logs a notice
-and skips — so watch for that notice in the release run, create a new token the same way and
-overwrite the secret with `gh secret set`.
+Finally, let the workflow publish from now on:
 
-## Secrets at a glance
+```bash
+gh variable set PUBLISH_NPM --repo <owner>/DevSweep --body true
+```
 
-| Secret | Used by | Missing means |
-|---|---|---|
-| `SPARKLE_PRIVATE_KEY` | signing the update archive | release publishes without `appcast.xml`, installed apps see no update |
-| `CODECOV_TOKEN` | coverage upload | coverage isn't reported for pushes |
-| `NPM_TOKEN` | publishing the npx installer | `npx devsweep` keeps installing the previous version |
+If you created an automation token to get here, delete it at
+<https://www.npmjs.com/settings/~/tokens>; it isn't needed any more.
+
+Releases run npm 11 on Node 22 (the versions that speak OIDC) and publish with
+`id-token: write`, which also attaches provenance automatically. Without the `PUBLISH_NPM`
+variable the job is skipped and everything else in the release still runs.
+
+If the name `devsweep` is taken by the time you get there, rename the package in
+`packaging/npm/package.json` to `@<user>/devsweep`; people then run `npx @<user>/devsweep`.
+
+## Secrets and variables at a glance
+
+| Name | Kind | Used by | Missing means |
+|---|---|---|---|
+| `SPARKLE_PRIVATE_KEY` | secret | signing the update archive | release publishes without `appcast.xml`, installed apps see no update |
+| `CODECOV_TOKEN` | secret | coverage upload | coverage isn't reported for pushes |
+| `PUBLISH_NPM` | variable | the npm publish job | `npx devsweep` keeps installing the previous version |
+
+Only two secrets exist, and neither can publish anything on its own: npm goes through trusted
+publishing and Homebrew reads a plain URL.

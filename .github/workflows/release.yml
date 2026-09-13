@@ -3,7 +3,8 @@ name: Release
 # release-please keeps a "chore(main): release x.y.z" pull request up to date from
 # Conventional Commits. Merging it tags the version, publishes the GitHub release with
 # the changelog, and the build job attaches the app, the Sparkle appcast, an SBOM and
-# Sigstore signatures to it. The last job publishes the npm installer, when NPM_TOKEN is set.
+# Sigstore signatures to it. The last job publishes the npm installer through npm trusted
+# publishing (OIDC, no token), once the PUBLISH_NPM repository variable is set to "true".
 #
 # The Homebrew cask (Casks/devsweep.rb) needs no job: it points at the stable
 # releases/latest/download/DevSweep.zip URL.
@@ -91,14 +92,15 @@ jobs:
 
   publish-npm:
     needs: [release-please, build]
-    if: ${{ always() && needs.build.result == 'success' }}
+    # Set the PUBLISH_NPM repository variable to "true" once the package exists on npm and
+    # trusted publishing is configured for it (see docs/MAINTAINING.md).
+    if: ${{ always() && needs.build.result == 'success' && vars.PUBLISH_NPM == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # npm provenance
+      id-token: write # npm trusted publishing (OIDC), no token involved
     env:
       TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || needs.release-please.outputs.tag_name }}
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -108,15 +110,11 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
+      - name: Use an npm that speaks OIDC
+        run: npm install -g npm@^11.5.1
       - name: Publish the installer to npm
-        if: ${{ env.NPM_TOKEN != '' }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           cd packaging/npm
           npm version "${TAG#v}" --no-git-tag-version
-          npm publish --provenance --access public
-      - name: Explain the skip
-        if: ${{ env.NPM_TOKEN == '' }}
-        run: echo "::notice::NPM_TOKEN is not set, so the npm installer still ships the previous version."
+          npm publish --access public
 

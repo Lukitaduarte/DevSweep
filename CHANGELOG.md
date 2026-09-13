@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/Lukitaduarte/DevSweep/compare/v0.1.1...v0.2.0) (2026-09-13)
+
+
+### Features
+
+* install with Homebrew or npx ([#7](https://github.com/Lukitaduarte/DevSweep/issues/7)) ([916c945](https://github.com/Lukitaduarte/DevSweep/commit/916c9454843371d5765ee88f8bd53354a54cfb18))
+
+
+### Bug Fixes
+
+* **npm:** publish the installer under a scope ([#10](https://github.com/Lukitaduarte/DevSweep/issues/10)) ([7d4a370](https://github.com/Lukitaduarte/DevSweep/commit/7d4a37081617b91d203b997c9587c181150db342))
+
 ## [0.1.1](https://github.com/Lukitaduarte/DevSweep/compare/v0.1.0...v0.1.1) (2026-09-13)
 
 

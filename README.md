@@ -111,6 +111,10 @@ Found a problem? See [SECURITY.md](SECURITY.md).
 
 New stacks, better rules and translations are very welcome, and most need no Swift. See [CONTRIBUTING.md](CONTRIBUTING.md). If you use [Claude Code](https://claude.com/claude-code), [`CLAUDE.md`](CLAUDE.md) and the skills in [`.claude/skills`](.claude/skills) walk it through adding stacks, translations, investigating detections and preparing screenshots.
 
+## Maintaining
+
+Cutting a release is merging the pull request release-please keeps open; everything else is automated. The one-time setup (signing keys, repository secrets, Codecov, CodeRabbit, the Homebrew tap and npm) and the troubleshooting steps live in [`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md).
+
 ## Project layout
 
 ```

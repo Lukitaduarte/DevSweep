@@ -36,8 +36,30 @@ To release: review and merge the release PR. Nothing else is manual.
    - Protect `main`: require the CI, CodeQL and secret-scan checks.
    - Allow GitHub Actions to create pull requests (Settings → Actions → General), which release-please needs.
 5. **Scorecard.** Its badge appears after the first run on `main`.
-6. **Homebrew (optional).** Create a public repository named `homebrew-tap` under the same owner, then add a `HOMEBREW_TAP_TOKEN` secret: a fine-grained personal access token with *Contents: read and write* on that repository only. Each release rewrites `Casks/devsweep.rb` there from `packaging/homebrew/devsweep.rb`, so `brew install --cask <owner>/tap/devsweep` gets the new version.
-7. **npm (optional).** Create an npm automation token and add it as `NPM_TOKEN`. Each release publishes `packaging/npm` (the `npx devsweep` installer) with provenance. Without the secret the job logs a notice and is skipped.
+6. **Homebrew (optional).** Homebrew installs from a "tap", which is just a public repository whose name starts with `homebrew-`.
+
+   ```bash
+   gh repo create <owner>/homebrew-tap --public \
+     --description "Homebrew tap for DevSweep" --add-readme
+   ```
+
+   Then create a **fine-grained** personal access token at <https://github.com/settings/personal-access-tokens/new>: resource owner `<owner>`, *Only select repositories* → `homebrew-tap`, permission *Contents: Read and write*. Nothing else. Store it:
+
+   ```bash
+   gh secret set HOMEBREW_TAP_TOKEN --repo <owner>/DevSweep   # paste the token
+   ```
+
+   A plain `GITHUB_TOKEN` can't be used here, because a workflow token only reaches its own repository. From the next release on, the workflow writes `Casks/devsweep.rb` into the tap and `brew install --cask <owner>/tap/devsweep` works.
+
+7. **npm (optional).** Publishing the `npx devsweep` installer needs an npm account with 2FA and an **automation** token (the only kind that works in CI with 2FA on): <https://www.npmjs.com/settings/~/tokens> → *Generate New Token* → *Classic* → *Automation*.
+
+   ```bash
+   gh secret set NPM_TOKEN --repo <owner>/DevSweep            # paste the token
+   ```
+
+   Check the package name is still free (`npm view devsweep`; a 404 means free). If it's taken, publish as a scoped package: change `name` in `packaging/npm/package.json` to `@<user>/devsweep` and tell people to run `npx @<user>/devsweep`.
+
+   Without either secret the matching job logs a notice and is skipped, so releases keep working.
 
 ## Troubleshooting
 

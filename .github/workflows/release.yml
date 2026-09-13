@@ -148,9 +148,16 @@ jobs:
 
           BOT="41898282+github-actions[bot]"
           cd tap
+          # A tap that was just created has no commits and no branch yet.
+          git symbolic-ref HEAD refs/heads/main
+          git add Casks/devsweep.rb
+          if git diff --cached --quiet; then
+            echo "The cask is already at ${VERSION}."
+            exit 0
+          fi
           git -c "user.name=github-actions[bot]" -c "user.email=${BOT}@users.noreply.github.com" \
-            commit -am "devsweep ${VERSION}" || { echo "cask already up to date"; exit 0; }
-          git push
+            commit -m "devsweep ${VERSION}"
+          git push origin HEAD:main
       - name: Explain the skip
         if: ${{ env.TAP_TOKEN == '' }}
         run: echo "::notice::HOMEBREW_TAP_TOKEN is not set, so the Homebrew cask was not updated."

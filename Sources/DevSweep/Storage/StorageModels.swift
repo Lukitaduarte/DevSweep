@@ -32,6 +32,16 @@ enum CleanMethod: Sendable {
     case trash
     /// Runs each command (first element is the tool) and optionally deletes the paths afterwards.
     case commands([[String]], thenDelete: Bool)
+
+    /// Short, stable label for the cleanup log.
+    var logDescription: String {
+        switch self {
+        case .delete: "delete"
+        case .trash: "trash"
+        case .commands(let commands, let thenDelete):
+            (commands.map { $0.joined(separator: " ") } + (thenDelete ? ["delete"] : [])).joined(separator: "; ")
+        }
+    }
 }
 
 struct StorageTarget: Identifiable, Sendable {

@@ -49,6 +49,14 @@ enum Cleaner {
                 errors += target.paths.compactMap(SafeDelete.remove)
             }
         }
+        CleanupLog.record(CleanupLog.Entry(
+            date: Date(),
+            item: target.id,
+            risk: target.risk.rawValue,
+            method: target.method.logDescription,
+            paths: target.paths.map(\.path),
+            errors: errors
+        ))
         return errors
     }
 }
@@ -57,6 +65,13 @@ enum SafeDelete {
     private static let protectedTopLevel: Set<String> = [
         "Desktop", "Documents", "Downloads", "Library", "Pictures", "Movies", "Music",
         "Applications", "Public", "Project", "Projects", "Developer", ".ssh", ".gnupg", ".config",
+    ]
+    /// Shell setup is not a cache and no stack has any business touching it. Blocked outright so a
+    /// stack file — including one from a contributor — can never take a terminal down with it.
+    private static let protectedPrefixes: [String] = [
+        ".oh-my-zsh", ".oh-my-posh", ".zshrc", ".zshenv", ".zprofile", ".zlogin", ".zlogout",
+        ".zsh_history", ".zcompdump", ".bashrc", ".bash_profile", ".bash_history", ".profile",
+        ".p10k.zsh", ".poshthemes", ".fzf.zsh", ".gitconfig", ".netrc",
     ]
     private static let protectedInLibrary: Set<String> = [
         "Caches", "Application Support", "Developer", "Preferences", "Keychains",
@@ -71,6 +86,7 @@ enum SafeDelete {
         let parts = path.dropFirst(home.count + 1).split(separator: "/").map(String.init)
         guard !parts.isEmpty else { return false }
         if parts.count == 1 && protectedTopLevel.contains(parts[0]) { return false }
+        if protectedPrefixes.contains(where: { parts[0] == $0 || parts[0].hasPrefix($0) }) { return false }
         if parts.count == 2 && parts[0] == "Library" && protectedInLibrary.contains(parts[1]) { return false }
         return true
     }

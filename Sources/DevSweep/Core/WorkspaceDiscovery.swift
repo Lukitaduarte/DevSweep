@@ -29,23 +29,37 @@ enum WorkspaceDiscovery {
         maximum: Int = 8
     ) -> [String] {
         let support = applicationSupport ?? home + "/Library/Application Support"
-        var roots: [String] = []
-        var seen = Set<String>()
+        let realHome = URL(fileURLWithPath: home).resolvingSymlinksInPath().path
 
-        func add(_ path: String) {
-            let absolute = path.hasPrefix("~/") ? home + "/" + path.dropFirst(2) : path
-            let standardized = URL(fileURLWithPath: absolute).standardizedFileURL.path
-            // Only real folders strictly inside the home folder, and never the home folder itself.
-            guard standardized.hasPrefix(home + "/"), PathGlob.exists(standardized),
-                  isDirectory(standardized), seen.insert(standardized.lowercased()).inserted else { return }
-            // A folder already covered by one on the list adds nothing.
-            guard !roots.contains(where: { standardized.hasPrefix(expand($0, home: home) + "/") }) else { return }
-            roots.append(display(standardized, home: home))
+        // Editor-derived roots come first: a folder the user demonstrably works in outranks a
+        // conventional name, and `maximum` drops the tail of this list.
+        let candidates = openedProjectParents(home: home, support: support) + conventionalRoots
+
+        var kept: [String] = []
+        var seen = Set<String>()
+        for candidate in candidates {
+            // Symlinks are resolved before the boundary check: a ~/code that points outside the
+            // home folder is somewhere DevSweep could never clean, so it is not offered.
+            let canonical = URL(fileURLWithPath: expand(candidate, home: home))
+                .resolvingSymlinksInPath().path
+            guard canonical.hasPrefix(realHome + "/"), isDirectory(canonical),
+                  seen.insert(canonical.lowercased()).inserted else { continue }
+            kept.append(canonical)
         }
 
-        for path in conventionalRoots { add(path) }
-        for parent in openedProjectParents(home: home, support: support) { add(parent) }
-        return Array(roots.prefix(maximum))
+        // A folder already inside another on the list adds nothing; keep the ancestor.
+        let roots = kept.filter { path in
+            !kept.contains { $0 != path && path.hasPrefix($0 + "/") }
+        }
+        return roots.prefix(maximum).map { display($0, home: realHome) }
+    }
+
+    /// The roots typed by the user that exist on disk. Confirmation needs at least one: a typo
+    /// would otherwise turn recommendations on with nothing behind them.
+    static func existingRoots(in text: String, home: String = NSHomeDirectory()) -> [String] {
+        text.split(whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && isDirectory(expand($0, home: home)) }
     }
 
     /// The parent folder of every project the user's editors have open or recently open.
@@ -106,16 +120,16 @@ enum WorkspaceDiscovery {
         }
     }
 
-    private static func isDirectory(_ path: String) -> Bool {
+    static func isDirectory(_ path: String) -> Bool {
         var directory: ObjCBool = false
         return FileManager.default.fileExists(atPath: path, isDirectory: &directory) && directory.boolValue
     }
 
-    private static func expand(_ path: String, home: String) -> String {
+    static func expand(_ path: String, home: String) -> String {
         path.hasPrefix("~/") ? home + "/" + path.dropFirst(2) : path
     }
 
-    private static func display(_ path: String, home: String) -> String {
+    static func display(_ path: String, home: String) -> String {
         path.hasPrefix(home + "/") ? "~/" + path.dropFirst(home.count + 1) : path
     }
 }

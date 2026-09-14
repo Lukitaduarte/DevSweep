@@ -46,8 +46,8 @@ enum Prefs {
     }
 
     static var defaultProjectRoots: [String] {
-        let found = WorkspaceDiscovery.suggestedRoots()
-        return found.isEmpty ? ["~/Projects"] : found
+        // No fallback on purpose: an invented folder would let the user confirm an empty setup.
+        WorkspaceDiscovery.suggestedRoots()
     }
 }
 

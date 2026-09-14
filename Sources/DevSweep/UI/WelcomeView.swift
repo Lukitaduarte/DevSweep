@@ -10,11 +10,9 @@ struct WelcomeView: View {
     @AppStorage(Prefs.Key.workspacesConfirmed) private var workspacesConfirmed = false
     let onConfirm: () -> Void
 
-    private var roots: [String] {
-        projectRoots.split(whereSeparator: \.isNewline)
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
-    }
+    /// Only folders that exist count: confirming a typo would start recommending with nothing
+    /// behind the list.
+    private var roots: [String] { WorkspaceDiscovery.existingRoots(in: projectRoots) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {

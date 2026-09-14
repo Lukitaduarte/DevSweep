@@ -89,6 +89,40 @@ final class WorkspaceDiscoveryTests: XCTestCase {
         XCTAssertEqual(WorkspaceDiscovery.folderURIs(in: json), ["file:///p/app"])
     }
 
+    func testAnEditorFolderSurvivesWhenConventionalOnesFillTheList() throws {
+        for name in ["Project", "Projects", "Developer", "dev", "code", "workspace", "src", "work"] {
+            try makeDirectory(name)
+        }
+        try makeDirectory("unusual-place/checkout-app")
+        let storage = support.appendingPathComponent("Code/User/globalStorage")
+        try FileManager.default.createDirectory(at: storage, withIntermediateDirectories: true)
+        let project = home.appendingPathComponent("unusual-place/checkout-app").path
+        try #"{"backupWorkspaces": {"folders": [{"folderUri": "file://\#(project)"}]}}"#
+            .write(to: storage.appendingPathComponent("storage.json"), atomically: true, encoding: .utf8)
+
+        let found = roots()
+        XCTAssertEqual(found.count, 8)
+        XCTAssertEqual(found.first, "~/unusual-place", "the folder actually in use outranks a convention")
+    }
+
+    func testAFolderLinkingOutsideHomeIsNotOffered() throws {
+        let outside = try TestSupport.temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: outside) }
+        try FileManager.default.createSymbolicLink(
+            at: home.appendingPathComponent("code"), withDestinationURL: outside
+        )
+        XCTAssertTrue(roots().isEmpty, "DevSweep could never clean there, so it must not offer it")
+    }
+
+    func testOnlyRootsThatExistCountAsConfirmable() throws {
+        try makeDirectory("Projects")
+        let typed = "~/Projects\n~/Porjects\n\n  \n"
+        XCTAssertEqual(
+            WorkspaceDiscovery.existingRoots(in: typed, home: home.path), ["~/Projects"],
+            "a typo must not be enough to turn recommendations on"
+        )
+    }
+
     func testTheListIsCapped() throws {
         for name in ["Project", "Projects", "Developer", "dev", "code", "workspace", "src", "work", "git"] {
             try makeDirectory(name)

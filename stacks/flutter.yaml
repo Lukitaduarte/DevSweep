@@ -83,10 +83,10 @@ storage:
       pt-BR: Downloads do pub pela metade
       es: Descargas del pub a medias
     description:
-      en: "~/.pub-cache/_temp: interrupted downloads."
-      pt-BR: "~/.pub-cache/_temp: downloads interrompidos."
-      es: "~/.pub-cache/_temp: descargas interrumpidas."
-    risk: safe
+      en: "~/.pub-cache/_temp: interrupted downloads. Pub fetches them again when a project needs them."
+      pt-BR: "~/.pub-cache/_temp: downloads interrompidos. O pub baixa de novo quando algum projeto precisar."
+      es: "~/.pub-cache/_temp: descargas interrumpidas. Pub las baja de nuevo cuando un proyecto las necesite."
+    risk: redownload
     paths:
       - ~/.pub-cache/_temp
 
@@ -177,9 +177,9 @@ storage:
       pt-BR: Pods de projetos Flutter inativos
       es: Pods de proyectos Flutter inactivos
     description:
-      en: "ios/Pods and ios/.symlinks of projects idle for {inactive_days}+ days: {projects}. Recovering them takes flutter pub get and then pod install, in that order."
-      pt-BR: "ios/Pods e ios/.symlinks de projetos parados há {inactive_days}+ dias: {projects}. Para voltar: flutter pub get e depois pod install, nessa ordem."
-      es: "ios/Pods e ios/.symlinks de proyectos sin actividad hace {inactive_days}+ días: {projects}. Para recuperarlos: flutter pub get y luego pod install, en ese orden."
+      en: "ios/Pods, macos/Pods and their .symlinks, for projects idle for {inactive_days}+ days: {projects}. Recovering them takes flutter pub get and then pod install, in that order."
+      pt-BR: "ios/Pods, macos/Pods e os .symlinks deles, de projetos parados há {inactive_days}+ dias: {projects}. Para voltar: flutter pub get e depois pod install, nessa ordem."
+      es: "ios/Pods, macos/Pods y sus .symlinks, de proyectos sin actividad hace {inactive_days}+ días: {projects}. Para recuperarlos: flutter pub get y luego pod install, en ese orden."
     risk: redownload
     auto_suggest: false
     project:

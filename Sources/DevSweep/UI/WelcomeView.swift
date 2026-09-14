@@ -42,6 +42,13 @@ struct WelcomeView: View {
             Spacer()
 
             Button(tr("welcome.confirm")) {
+                // Written explicitly: Prefs.register() supplies projectRoots through the
+                // registration domain, which is volatile. Confirming without touching the editor
+                // would persist nothing, and a later launch would recompute a different list —
+                // one the user never saw — while confirmation stayed true.
+                let confirmed = roots.joined(separator: "\n")
+                Prefs.defaults.set(confirmed, forKey: Prefs.Key.projectRoots)
+                projectRoots = confirmed
                 workspacesConfirmed = true
                 onConfirm()
             }

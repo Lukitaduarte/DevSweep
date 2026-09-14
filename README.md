@@ -100,6 +100,40 @@ DEVSWEEP_LIVE=1 swift test --filter LiveReportTests
 
 DevSweep checks this repository's releases once a day using [Sparkle](https://sparkle-project.org). Every update is signed with an EdDSA key and verified before it's installed. In **Settings → Updates** you can check now, turn on automatic installs, or open the releases and changelog.
 
+## Your project folders
+
+The first time you open DevSweep it asks where your projects live, and **recommends nothing until
+you confirm the list**. That list is not cosmetic: "this Flutter SDK is unused" and "this project
+has been idle for weeks" are both derived from it. A folder missing from the list makes a project
+you work in every day look abandoned — and its pinned SDK look disposable.
+
+### What it proposes, and where that comes from
+
+Two sources, both only proposals you can edit before confirming:
+
+1. **Folders your editors have open.** VS Code and its forks (Code, Insiders, Cursor, Antigravity
+   IDE, Windsurf, VSCodium) record opened folders in `User/globalStorage/storage.json`, and
+   JetBrains IDEs (IntelliJ, Android Studio, GoLand, PyCharm…) in `options/recentProjects.xml`.
+   DevSweep reads those lists and proposes the **parent folder** of each project, so wherever you
+   actually work gets found even if its name is unusual.
+2. **Conventional folder names**, when they exist in your home folder:
+
+   | Source | Folders |
+   |---|---|
+   | Common by convention | `~/Project` `~/Projects` `~/Developer` `~/dev` `~/code` `~/workspace` `~/src` `~/work` `~/git` `~/repos` `~/Sites` |
+   | JetBrains IDEs | `~/StudioProjects` `~/AndroidStudioProjects` `~/IdeaProjects` `~/PycharmProjects` `~/WebstormProjects` `~/GolandProjects` `~/PhpstormProjects` `~/RubymineProjects` `~/CLionProjects` `~/RiderProjects` `~/DataGripProjects` |
+   | Other tools | `~/eclipse-workspace` `~/NetBeansProjects` `~/Documents/GitHub` (GitHub Desktop) `~/Unity` |
+
+Parent folders are enough — DevSweep looks a few levels inside each one. Your home folder itself is
+never proposed, and the list is capped at 8 entries. Change it any time in **Settings → Projects**.
+
+### What it reads, and what it doesn't
+
+Inside those folders DevSweep reads only what it needs to tell projects apart: marker files
+(`pubspec.yaml`, `package.json`, `go.mod`, …), the FVM pin, and modification dates. **It never reads
+your source code.** The editor lists above are read once, locally, to propose the folders; nothing
+about them leaves your machine.
+
 ## Customizing
 
 Stack knowledge lives in YAML files under [`stacks/`](stacks), one per stack. You can add your own without rebuilding:
@@ -118,9 +152,12 @@ DevSweep deletes files and stops processes, so it's built to be easy to audit:
 - **Open and small.** What gets detected and cleaned is plain YAML in [`stacks/`](stacks). Nothing is hidden in code.
 - **Guard rails in code.**
   - It only deletes inside your home folder and refuses well-known roots (`~/Documents`, `~/Library/Caches`, …).
+  - It never touches shell configuration (`~/.zshrc`, `~/.oh-my-zsh`, `~/.gitconfig`, …), whatever a stack file asks for.
+  - It recommends nothing until you confirm [your project folders](#your-project-folders), so no cleanup is based on a guess about your layout.
   - It only stops processes owned by your user, and first checks that the PID still runs the same command.
   - It never runs as root.
 - **No telemetry.** The only network access is the daily update check against GitHub releases.
+- **A record of every cleanup.** What ran, what it deleted and any errors go to `~/Library/Application Support/DevSweep/cleanup.log`, so you can always find out what touched a file.
 - **Checked on every change:**
   - [CodeQL](https://github.com/Lukitaduarte/DevSweep/security/code-scanning) static analysis;
   - [TruffleHog](https://github.com/trufflesecurity/trufflehog) secret scanning;

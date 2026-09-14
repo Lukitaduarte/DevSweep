@@ -15,6 +15,8 @@ enum Prefs {
         static let artifactAgeDays = "artifactAgeDays"
         static let artifactsToTrash = "artifactsToTrash"
         static let projectRoots = "projectRoots"
+        /// False until the user has seen and confirmed the folders their projects live in.
+        static let workspacesConfirmed = "workspacesConfirmed"
         static let storageScanHours = "storageScanHours"
         static let totalFreedBytes = "totalFreedBytes"
         static let notifiedAt = "notifiedAt"
@@ -33,6 +35,7 @@ enum Prefs {
             Key.artifactAgeDays: 7,
             Key.artifactsToTrash: true,
             Key.projectRoots: defaultProjectRoots.joined(separator: "\n"),
+            Key.workspacesConfirmed: false,
             Key.storageScanHours: 6.0,
         ])
     }
@@ -43,12 +46,8 @@ enum Prefs {
     }
 
     static var defaultProjectRoots: [String] {
-        let candidates = [
-            "~/Project", "~/Projects", "~/Developer", "~/dev", "~/code",
-            "~/workspace", "~/src", "~/StudioProjects", "~/git", "~/repos",
-        ]
-        let existing = candidates.filter { FileManager.default.fileExists(atPath: expandTilde($0)) }
-        return existing.isEmpty ? ["~/Projects"] : existing
+        // No fallback on purpose: an invented folder would let the user confirm an empty setup.
+        WorkspaceDiscovery.suggestedRoots()
     }
 }
 
@@ -64,6 +63,9 @@ struct PrefsSnapshot: Sendable {
     var artifactAgeDays: Int
     var artifactsToTrash: Bool
     var projectRoots: [String]
+    /// Recommendations stay off until this is true: guessing the project folders wrong makes
+    /// every pinned SDK and every live project look abandoned.
+    var workspacesConfirmed: Bool = true
 
     static func current() -> PrefsSnapshot {
         let d = Prefs.defaults
@@ -80,7 +82,8 @@ struct PrefsSnapshot: Sendable {
             projectRoots: (d.string(forKey: Prefs.Key.projectRoots) ?? "")
                 .split(whereSeparator: \.isNewline)
                 .map { $0.trimmingCharacters(in: .whitespaces) }
-                .filter { !$0.isEmpty }
+                .filter { !$0.isEmpty },
+            workspacesConfirmed: d.bool(forKey: Prefs.Key.workspacesConfirmed)
         )
     }
 }

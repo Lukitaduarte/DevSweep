@@ -102,3 +102,79 @@ final class CleanerTests: XCTestCase {
         XCTAssertNil(SafeDelete.remove(root.appendingPathComponent("not-there")))
     }
 }
+
+/// The cleanup log is what makes "something on my machine broke after a clean" answerable.
+final class CleanupLogTests: XCTestCase {
+    private var directory: URL!
+
+    override func setUpWithError() throws {
+        directory = try TestSupport.temporaryDirectory()
+    }
+
+    override func tearDown() {
+        try? FileManager.default.removeItem(at: directory)
+    }
+
+    private func entry(_ item: String, paths: [String] = ["/p/one"], errors: [String] = []) -> CleanupLog.Entry {
+        CleanupLog.Entry(date: Date(), item: item, risk: "redownload", method: "delete", paths: paths, errors: errors)
+    }
+
+    func testEntriesAppendAndReadBack() {
+        CleanupLog.record(entry("pub-cache", paths: ["/p/hosted/http-1.2.0"]), in: directory)
+        CleanupLog.record(entry("cocoapods-cache", errors: ["boom"]), in: directory)
+
+        let entries = CleanupLog.read(in: directory)
+        XCTAssertEqual(entries.map(\.item), ["pub-cache", "cocoapods-cache"])
+        XCTAssertEqual(entries.first?.paths, ["/p/hosted/http-1.2.0"])
+        XCTAssertEqual(entries.last?.errors, ["boom"])
+    }
+
+    func testLogStaysBounded() {
+        for index in 0..<520 {
+            CleanupLog.record(entry("item-\(index)"), in: directory)
+        }
+        let entries = CleanupLog.read(in: directory)
+        XCTAssertEqual(entries.count, 500)
+        XCTAssertEqual(entries.last?.item, "item-519", "the newest entries are the ones kept")
+    }
+
+    func testCleaningRecordsWhatItTouched() throws {
+        let victim = directory.appendingPathComponent("cache")
+        try FileManager.default.createDirectory(at: victim, withIntermediateDirectories: true)
+
+        let target = StorageTarget(
+            id: "test-item", stack: StackInfo(id: "s", name: "S", icon: "gear", order: 1),
+            title: "Test", detail: "", risk: .safe, paths: [victim]
+        )
+        _ = Cleaner.clean(target)
+
+        let entries = CleanupLog.read()
+        XCTAssertEqual(entries.last?.item, "test-item")
+        XCTAssertEqual(entries.last?.paths, [victim.path])
+    }
+}
+
+/// Shell configuration is never a cache. These paths must be unreachable no matter what a
+/// stack file asks for, because a broken shell is not something a "clean" should ever cause.
+final class ShellConfigProtectionTests: XCTestCase {
+    private func home(_ relative: String) -> URL {
+        URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent(relative)
+    }
+
+    func testShellConfigurationIsNeverDeletable() {
+        let forbidden = [
+            ".oh-my-zsh", ".oh-my-zsh/cache", ".oh-my-zsh/custom/themes", ".zshrc", ".zshenv",
+            ".zprofile", ".zcompdump-somehost-5.9", ".zcompdump-somehost-5.9.zwc", ".p10k.zsh",
+            ".bashrc", ".bash_profile", ".gitconfig", ".netrc", ".poshthemes/theme.omp.json",
+        ]
+        for path in forbidden {
+            XCTAssertFalse(SafeDelete.isAllowed(home(path)), "\(path) must never be deletable")
+        }
+    }
+
+    func testOrdinaryCachesAreStillDeletable() {
+        for path in [".pub-cache/hosted/pub.dev/http-1.2.0", ".gradle/caches/build-cache-1", ".npm/_cacache"] {
+            XCTAssertTrue(SafeDelete.isAllowed(home(path)), "\(path) is a cache and must stay cleanable")
+        }
+    }
+}

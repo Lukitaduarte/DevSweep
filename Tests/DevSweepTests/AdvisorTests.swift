@@ -30,12 +30,43 @@ final class AdvisorTests: XCTestCase {
     }
 
     private func prefs(
-        suggestStorageGB: Double = 2, suggestLimboMB: Double = 150, lowDiskGB: Double = 30
+        suggestStorageGB: Double = 2, suggestLimboMB: Double = 150, lowDiskGB: Double = 30,
+        workspacesConfirmed: Bool = true
     ) -> PrefsSnapshot {
         PrefsSnapshot(
             notifications: true, suggestStorageGB: suggestStorageGB, notifyStorageGB: 5,
             suggestLimboMB: suggestLimboMB, notifyRAMMB: 500, lowDiskGB: lowDiskGB,
-            inactiveProjectDays: 21, artifactAgeDays: 7, artifactsToTrash: true, projectRoots: []
+            inactiveProjectDays: 21, artifactAgeDays: 7, artifactsToTrash: true, projectRoots: [],
+            workspacesConfirmed: workspacesConfirmed
+        )
+    }
+
+    /// Before the user says where their projects are, every "abandoned" judgement is a guess.
+    func testNothingIsRecommendedUntilTheWorkspacesAreConfirmed() {
+        let group = ProcessGroup(
+            rule: rule("dart-other"),
+            entries: [entry(1, rss: 900 * 1_048_576, limbo: true)]
+        )
+        let target = StorageTarget(
+            id: "derived-data", stack: StackInfo(id: "ios", name: "iOS", icon: "iphone", order: 10),
+            title: "DerivedData", detail: "", risk: .safe,
+            paths: [URL(fileURLWithPath: "/p/DerivedData")]
+        )
+        let sizes = ["derived-data": Int64(40_000_000_000)]
+
+        XCTAssertTrue(
+            Advisor.build(
+                groups: [group], targets: [target], sizes: sizes,
+                system: system(), prefs: prefs(workspacesConfirmed: false)
+            ).isEmpty,
+            "not even a 40 GB cache is offered before the project folders are confirmed"
+        )
+        XCTAssertFalse(
+            Advisor.build(
+                groups: [group], targets: [target], sizes: sizes,
+                system: system(), prefs: prefs()
+            ).isEmpty,
+            "and the same input is recommended once they are"
         )
     }
 

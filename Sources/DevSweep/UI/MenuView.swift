@@ -10,10 +10,13 @@ struct MenuView: View {
     @EnvironmentObject private var model: AppModel
     @State private var tab: MenuTab = .suggestions
     @State private var showingSettings = false
+    @AppStorage(Prefs.Key.workspacesConfirmed) private var workspacesConfirmed = false
 
     var body: some View {
         VStack(spacing: 0) {
-            if showingSettings {
+            if !workspacesConfirmed {
+                WelcomeView { model.prefsChanged() }
+            } else if showingSettings {
                 SettingsView {
                     showingSettings = false
                     model.prefsChanged()

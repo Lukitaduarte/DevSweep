@@ -37,6 +37,11 @@ enum Advisor {
         groups: [ProcessGroup], targets: [StorageTarget], sizes: [String: Int64],
         system: SystemSnapshot, prefs: PrefsSnapshot
     ) -> [Recommendation] {
+        // Which folders hold the user's projects decides which SDKs and build folders look
+        // abandoned. Guess it wrong and the first recommendation is to delete something in use,
+        // so nothing is recommended until the user has confirmed the list.
+        guard prefs.workspacesConfirmed else { return [] }
+
         var processRecs: [Recommendation] = []
         let limboMin = Int64(prefs.suggestLimboMB * 1_048_576)
 

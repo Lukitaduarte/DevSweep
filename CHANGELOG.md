@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.1](https://github.com/Lukitaduarte/DevSweep/compare/v0.2.0...v0.2.1) (2026-09-14)
+
+
+### Bug Fixes
+
+* **ci:** drop the unpinned npm install from the release ([#11](https://github.com/Lukitaduarte/DevSweep/issues/11)) ([ef27626](https://github.com/Lukitaduarte/DevSweep/commit/ef2762699514fcef0563dcce71c011c2a4052d5f))
+* **ci:** sign releases with a Sigstore bundle and attach provenance ([#12](https://github.com/Lukitaduarte/DevSweep/issues/12)) ([d67c033](https://github.com/Lukitaduarte/DevSweep/commit/d67c033ad3a7e498738ef64ff5bff28a8715171a))
+* **homebrew:** trust the tap by URL and drop the deprecated verified stanza ([#14](https://github.com/Lukitaduarte/DevSweep/issues/14)) ([cc1d893](https://github.com/Lukitaduarte/DevSweep/commit/cc1d8930ea48a425764d979107b49d31dce5d69d))
+* stop recommending deletions that break a working setup ([#15](https://github.com/Lukitaduarte/DevSweep/issues/15)) ([cfd1832](https://github.com/Lukitaduarte/DevSweep/commit/cfd183237cc3ddeb1359ff01ed2ab367c09bd367))
+
 ## [0.2.0](https://github.com/Lukitaduarte/DevSweep/compare/v0.1.1...v0.2.0) (2026-09-13)
 
 

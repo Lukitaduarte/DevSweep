@@ -12,6 +12,27 @@ final class StackDefinitionTests: XCTestCase {
         XCTAssertGreaterThan(definitions.storage.count, 20)
     }
 
+    /// Shared dependency caches are expensive to rebuild and are shared by every project, so a
+    /// bulk "clean recommended" must never take one: re-downloading every pod, including private
+    /// ones behind credentials, is not something a routine cleanup should trigger.
+    func testSharedDependencyCachesAreNeverSuggestedAutomatically() {
+        let manualOnly = [
+            "cocoapods-cache", "cocoapods-public-specs", "cocoapods-private-repos",
+            "flutter-inactive-pods", "pub-cache-git", "gradle-modules", "go-modcache",
+        ]
+        let byID = Dictionary(
+            TestSupport.definitions.storage.map { ($0.definition.id, $0.definition) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        for id in manualOnly {
+            guard let item = byID[id] else {
+                XCTFail("\(id) is gone: keep this list in step with stacks/*.yaml")
+                continue
+            }
+            XCTAssertEqual(item.autoSuggest, false, "\(id) must stay manual-only")
+        }
+    }
+
     func testStackTemplateIsValid() {
         let definitions = DefinitionLoader.load(from: [TestSupport.root.appendingPathComponent("docs")])
         XCTAssertEqual(definitions.issues, [])

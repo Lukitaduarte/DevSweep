@@ -70,15 +70,39 @@ storage:
   - id: pub-cache
     name: Pub cache
     description:
-      en: "Packages from flutter/dart pub get. They come back on the next pub get."
-      pt-BR: "Pacotes de flutter/dart pub get. Voltam no próximo pub get."
-      es: "Paquetes de flutter/dart pub get. Vuelven en el próximo pub get."
+      en: "Packages from flutter/dart pub get, minus the ones your global CLIs (melos, fvm, flutterfire) need. They come back on the next pub get."
+      pt-BR: "Pacotes de flutter/dart pub get, menos os que suas CLIs globais (melos, fvm, flutterfire) precisam. Voltam no próximo pub get."
+      es: "Paquetes de flutter/dart pub get, menos los que necesitan tus CLI globales (melos, fvm, flutterfire). Vuelven en el próximo pub get."
     risk: redownload
     suggest_above: 4GB
+    provider: pub-cache-unused
+
+  - id: pub-cache-temp
+    name:
+      en: Pub downloads left half-done
+      pt-BR: Downloads do pub pela metade
+      es: Descargas del pub a medias
+    description:
+      en: "~/.pub-cache/_temp: interrupted downloads."
+      pt-BR: "~/.pub-cache/_temp: downloads interrompidos."
+      es: "~/.pub-cache/_temp: descargas interrumpidas."
+    risk: safe
     paths:
-      - ~/.pub-cache/hosted
-      - ~/.pub-cache/git
       - ~/.pub-cache/_temp
+
+  - id: pub-cache-git
+    name:
+      en: "Pub cache: git dependencies"
+      pt-BR: "Cache do pub: dependências git"
+      es: "Caché del pub: dependencias git"
+    description:
+      en: "Clones of packages pinned to a git repository. Private repositories need their credentials again."
+      pt-BR: "Clones de pacotes fixados em repositório git. Repositórios privados vão pedir credencial de novo."
+      es: "Clones de paquetes fijados a un repositorio git. Los repositorios privados pedirán credenciales de nuevo."
+    risk: redownload
+    auto_suggest: false
+    paths:
+      - ~/.pub-cache/git
 
   - id: dart-server
     name:
@@ -120,16 +144,16 @@ storage:
       pt-BR: Builds de projetos Flutter inativos
       es: Builds de proyectos Flutter inactivos
     description:
-      en: "build/, .dart_tool and Pods of {project_count} project(s) idle for {inactive_days}+ days: {projects}."
-      pt-BR: "build/, .dart_tool e Pods de {project_count} projeto(s) parados há {inactive_days}+ dias: {projects}."
-      es: "build/, .dart_tool y Pods de {project_count} proyecto(s) sin actividad hace {inactive_days}+ días: {projects}."
+      en: "build/, .dart_tool and android/.gradle of {project_count} project(s) idle for {inactive_days}+ days: {projects}. Restored by flutter pub get."
+      pt-BR: "build/, .dart_tool e android/.gradle de {project_count} projeto(s) parados há {inactive_days}+ dias: {projects}. Voltam com flutter pub get."
+      es: "build/, .dart_tool y android/.gradle de {project_count} proyecto(s) sin actividad hace {inactive_days}+ días: {projects}. Vuelven con flutter pub get."
     risk: redownload
     suggest_above: 1GB
     project:
       markers: [pubspec.yaml]
       activity: inactive
       activity_files: [pubspec.lock, lib, .dart_tool/package_config.json]
-      paths: [build, .dart_tool, ios/Pods, macos/Pods, android/.gradle, ios/.symlinks]
+      paths: [build, .dart_tool, android/.gradle]
 
   - id: flutter-active-build
     name:
@@ -146,3 +170,20 @@ storage:
       markers: [pubspec.yaml]
       activity: active
       paths: [build]
+
+  - id: flutter-inactive-pods
+    name:
+      en: Pods of inactive Flutter projects
+      pt-BR: Pods de projetos Flutter inativos
+      es: Pods de proyectos Flutter inactivos
+    description:
+      en: "ios/Pods and ios/.symlinks of projects idle for {inactive_days}+ days: {projects}. Recovering them takes flutter pub get and then pod install, in that order."
+      pt-BR: "ios/Pods e ios/.symlinks de projetos parados há {inactive_days}+ dias: {projects}. Para voltar: flutter pub get e depois pod install, nessa ordem."
+      es: "ios/Pods e ios/.symlinks de proyectos sin actividad hace {inactive_days}+ días: {projects}. Para recuperarlos: flutter pub get y luego pod install, en ese orden."
+    risk: redownload
+    auto_suggest: false
+    project:
+      markers: [pubspec.yaml]
+      activity: inactive
+      activity_files: [pubspec.lock, lib, .dart_tool/package_config.json]
+      paths: [ios/Pods, macos/Pods, ios/.symlinks, macos/.symlinks]

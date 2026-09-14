@@ -204,10 +204,11 @@ storage:
       pt-BR: Cache do CocoaPods
       es: Caché de CocoaPods
     description:
-      en: "Downloaded pods. They come back on the next pod install."
-      pt-BR: "Pods baixados. Voltam no próximo pod install."
-      es: "Pods descargados. Vuelven en el próximo pod install."
+      en: "Downloaded pods, shared by every project. The next pod install of each project downloads them again."
+      pt-BR: "Pods baixados, compartilhados por todos os projetos. O próximo pod install de cada projeto baixa tudo de novo."
+      es: "Pods descargados, compartidos por todos los proyectos. El próximo pod install de cada proyecto los descarga de nuevo."
     risk: redownload
+    auto_suggest: false
     paths:
       - ~/Library/Caches/CocoaPods/*
 
@@ -221,7 +222,7 @@ storage:
       pt-BR: "Clone git do repositório público de specs. O CocoaPods atual usa a CDN (trunk)."
       es: "Clon git del repositorio público de specs. El CocoaPods actual usa la CDN (trunk)."
     risk: redownload
-    suggest_above: 500MB
+    auto_suggest: false
     paths:
       - glob: ~/.cocoapods/repos/*
         file_contains: { file: .git/config, text: github.com/CocoaPods/Specs }
@@ -239,7 +240,7 @@ storage:
     auto_suggest: false
     paths:
       - glob: ~/.cocoapods/repos/*
-        exclude: [trunk]
+        exclude: [trunk, Spec_Lock]
         file_not_contains: { file: .git/config, text: github.com/CocoaPods/Specs }
 
   - id: swiftpm-cache

@@ -24,7 +24,7 @@ struct ProviderResult: Sendable {
 enum StorageProviders {
     static let names: Set<String> = [
         "fvm-versions", "xcode-unavailable-simulators", "android-unused-system-images",
-        "nvm-non-default-versions", "old-installers",
+        "nvm-non-default-versions", "old-installers", "pub-cache-unused",
     ]
 
     static func run(_ name: String, context: ProviderContext) -> [ProviderResult] {
@@ -34,6 +34,7 @@ enum StorageProviders {
         case "android-unused-system-images": [ProviderResult(paths: unusedAndroidSystemImages(context))]
         case "nvm-non-default-versions": [ProviderResult(paths: nvmNonDefaultVersions(context))]
         case "old-installers": [oldInstallers(context)]
+        case "pub-cache-unused": [ProviderResult(paths: unusedPubCachePackages(context))]
         default: []
         }
     }
@@ -64,9 +65,12 @@ enum StorageProviders {
                     ? tr("provider.fvm.unused")
                     : tr(active.isEmpty ? "provider.fvm.used_by_inactive" : "provider.fvm.used_by",
                          ["projects": StorageCatalog.projectList(users)])
+                // No pin found is not evidence of "unused": the project may live outside the
+                // scanned roots or deeper than the scan goes. Only suggest on positive evidence
+                // that every project pinning this version is inactive.
                 results.append(ProviderResult(
                     key: version, vars: ["version": version, "usage": usage], paths: [url],
-                    autoSuggest: active.isEmpty, stopProcesses: [path + "/"]
+                    autoSuggest: !users.isEmpty && active.isEmpty, stopProcesses: [path + "/"]
                 ))
             }
         }
@@ -80,6 +84,16 @@ enum StorageProviders {
                   let match = regex.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)),
                   let range = Range(match.range(at: 1), in: text) else { continue }
             return String(text[range])
+        }
+        // FVM 2.x and `fvm use` without a config file: .fvm/flutter_sdk links into versions/<version>.
+        for link in [".fvm/flutter_sdk", ".fvm/versions"] {
+            let path = project.appendingPathComponent(link).path
+            guard let target = try? FileManager.default.destinationOfSymbolicLink(atPath: path) else { continue }
+            let resolved = URL(fileURLWithPath: target, relativeTo: project.appendingPathComponent(link).deletingLastPathComponent())
+                .standardizedFileURL
+            if resolved.deletingLastPathComponent().lastPathComponent == "versions" {
+                return resolved.lastPathComponent
+            }
         }
         return nil
     }
@@ -134,6 +148,65 @@ enum StorageProviders {
     }
 
     // MARK: Installers
+
+    // MARK: Pub
+
+    /// Packages in ~/.pub-cache that no globally activated package needs, with their hash files.
+    ///
+    /// Deleting all of `hosted` breaks every `dart pub global activate` CLI (melos, fvm,
+    /// flutterfire_cli): `pub get` restores a project's own dependencies but never theirs, and
+    /// leaving `hosted-hashes` behind is what makes pub report a corrupt cache.
+    private static func unusedPubCachePackages(_ context: ProviderContext) -> [URL] {
+        let template = context.options["root"]?.first ?? "~/.pub-cache"
+        guard let root = PathTemplate.expand(template).first else { return [] }
+        let keep = globallyActivatedPackages(root: root)
+
+        var found: [URL] = []
+        for host in PathGlob.expand(root + "/hosted/*") {
+            for package in PathGlob.children(of: host) {
+                let name = package.lastPathComponent
+                guard !name.hasPrefix("."), !keep.contains(name) else { continue }
+                found.append(package)
+                let hashes = URL(fileURLWithPath: root + "/hosted-hashes")
+                    .appendingPathComponent(host.lastPathComponent)
+                    .appendingPathComponent(name + ".sha256")
+                if PathGlob.exists(hashes.path) { found.append(hashes) }
+            }
+        }
+        return found
+    }
+
+    /// `<name>-<version>` of every package listed in a global package's lockfile, plus the
+    /// activated packages themselves.
+    static func globallyActivatedPackages(root: String) -> Set<String> {
+        var keep = Set<String>()
+        for package in PathGlob.expand(root + "/global_packages/*") {
+            let lock = package.appendingPathComponent("pubspec.lock")
+            guard let text = try? String(contentsOf: lock, encoding: .utf8) else { continue }
+            keep.formUnion(lockedPackages(text))
+        }
+        return keep
+    }
+
+    /// Parses a pubspec.lock without a YAML dependency: `  <name>:` blocks with a `version:` line.
+    static func lockedPackages(_ lock: String) -> Set<String> {
+        var keep = Set<String>()
+        var name: String?
+        for line in lock.split(separator: "\n", omittingEmptySubsequences: false) {
+            let indent = line.prefix { $0 == " " }.count
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if indent == 2, trimmed.hasSuffix(":") {
+                name = String(trimmed.dropLast())
+            } else if indent == 4, trimmed.hasPrefix("version:"), let current = name {
+                let version = trimmed.dropFirst("version:".count)
+                    .trimmingCharacters(in: CharacterSet(charactersIn: " \"'"))
+                if !version.isEmpty { keep.insert("\(current)-\(version)") }
+            }
+        }
+        return keep
+    }
+
+    // MARK: Installers helper
 
     /// Old build artifacts in personal folders. Options: `extensions`, `folders`.
     private static func oldInstallers(_ context: ProviderContext) -> ProviderResult {
